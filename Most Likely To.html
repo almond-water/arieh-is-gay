@@ -1,0 +1,441 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Most Likely To</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Graduate&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: varsity yearbook band on top, prompt list beside a five-row tier board (stacks on phones). */
+:root {
+  --paper: #f2f4f9;
+  --surface: #ffffff;
+  --ink: #151a2d;
+  --muted: #586079;
+  --line: #d8dce8;
+  --band: #1c2756;
+  --on-band: #f4f1e6;
+  --gold: #b98720;
+  --gold-soft: #f3e6c4;
+  --focus: #3e7ce0;
+  --t-s: #e5484d; --t-a: #f0883e; --t-b: #e8c13c; --t-c: #4aa85a; --t-d: #4a82de;
+  --on-tier: #151a2d;
+  --chip: #eef1f8;
+  --chip-sel: #151a2d; --on-chip-sel: #ffffff;
+  --display: "Graduate", "Rockwell", "Courier New", serif;
+  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0d1224; --surface: #151c34; --ink: #e7eaf4; --muted: #9aa2bf; --line: #283152;
+  --band: #18214a; --on-band: #f4f1e6; --gold: #e2b54d; --gold-soft: #3a3220; --focus: #7aa7ff;
+  --chip: #1f2744; --chip-sel: #e7eaf4; --on-chip-sel: #0d1224; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --paper: #0d1224; --surface: #151c34; --ink: #e7eaf4; --muted: #9aa2bf; --line: #283152;
+  --band: #18214a; --on-band: #f4f1e6; --gold: #e2b54d; --gold-soft: #3a3220; --focus: #7aa7ff;
+  --chip: #1f2744; --chip-sel: #e7eaf4; --on-chip-sel: #0d1224; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+.band { background: var(--band); color: var(--on-band); }
+.band .wrap { padding-block: 28px 30px; display: grid; gap: 10px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.wordmark { font-family: var(--display); font-size: clamp(34px, 7vw, 64px); line-height: 1; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+.wordmark span { color: var(--gold); }
+.lede { margin: 0; max-width: 60ch; opacity: .85; }
+
+.notice { margin-top: 16px; padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid var(--gold); background: var(--surface); border-radius: 6px; font-size: 14px; }
+
+.layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; padding-block: 24px 48px; align-items: start; }
+@media (max-width: 760px) { .layout { grid-template-columns: minmax(0, 1fr); gap: 18px; } }
+
+.panel-title { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.prompts { display: grid; gap: 6px; }
+.prompt-btn { text-align: left; width: 100%; padding: 10px 12px; background: transparent; border: 1px solid transparent; border-radius: 8px; display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; }
+.prompt-btn:hover { background: var(--surface); border-color: var(--line); }
+.prompt-btn[aria-current="true"] { background: var(--surface); border-color: var(--ink); }
+.prompt-btn .p-text { min-width: 0; overflow-wrap: anywhere; }
+.prompt-btn .p-count { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+@media (max-width: 760px) {
+  .prompts { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
+  .prompt-btn { width: auto; flex: none; max-width: 240px; border-color: var(--line); background: var(--surface); }
+}
+.empty-small { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+
+form.add { display: grid; gap: 6px; margin-top: 14px; }
+form.add label { font-size: 13px; font-weight: 600; }
+.field { display: flex; gap: 6px; }
+.field input { flex: 1; min-width: 0; padding: 9px 11px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; }
+.btn { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); font-weight: 600; flex: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--ink); }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+.starters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.starter { font-size: 12px; padding: 4px 9px; border-radius: 999px; border: 1px dashed var(--line); background: transparent; color: var(--muted); }
+.starter:hover { color: var(--ink); border-color: var(--ink); }
+
+.question { margin: 0 0 4px; font-size: 14px; color: var(--muted); font-weight: 500; }
+.question-big { font-family: var(--display); font-size: clamp(24px, 4vw, 36px); line-height: 1.15; margin: 0 0 16px; text-wrap: balance; overflow-wrap: anywhere; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.tabs { display: inline-flex; border: 1px solid var(--ink); border-radius: 8px; overflow: hidden; }
+.tabs button { padding: 7px 14px; background: transparent; border: 0; font-weight: 600; font-size: 14px; }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.meta { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.board { border: 2px solid var(--ink); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.row { display: grid; grid-template-columns: 92px minmax(0, 1fr); border-top: 1px solid var(--line); min-height: 64px; }
+.row:first-child { border-top: 0; }
+.tier { display: grid; place-content: center; text-align: center; color: var(--on-tier); padding: 6px; gap: 0; }
+.tier b { font-family: var(--display); font-size: 30px; line-height: 1; }
+.tier small { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.row[data-t="S"] .tier { background: var(--t-s); } .row[data-t="A"] .tier { background: var(--t-a); }
+.row[data-t="B"] .tier { background: var(--t-b); } .row[data-t="C"] .tier { background: var(--t-c); }
+.row[data-t="D"] .tier { background: var(--t-d); }
+.slot { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; align-content: center; min-width: 0; }
+.row.droppable .slot { cursor: pointer; background: repeating-linear-gradient(135deg, transparent 0 8px, var(--gold-soft) 8px 10px); }
+.row.droppable .slot:hover { outline: 2px dashed var(--gold); outline-offset: -4px; }
+.slot-empty { color: var(--muted); font-size: 13px; align-self: center; }
+
+.tray { margin-top: 14px; padding: 12px; border: 1px dashed var(--line); border-radius: 10px; }
+.tray.droppable { cursor: pointer; border-color: var(--gold); }
+.tray .slot { padding: 6px 0 0; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 6px 5px 11px; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+.chip .n { overflow-wrap: anywhere; }
+.chip .c { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pick { cursor: pointer; padding-right: 11px; }
+.chip.pick[aria-pressed="true"] { background: var(--chip-sel); color: var(--on-chip-sel); border-color: var(--chip-sel); }
+.chip.pick[aria-pressed="true"] .c { color: inherit; }
+.x { width: 22px; height: 22px; border-radius: 50%; border: 0; background: transparent; color: var(--muted); display: grid; place-content: center; font-size: 15px; line-height: 1; padding: 0; }
+.x:hover { background: var(--line); color: var(--ink); }
+
+.mod { margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.empty-board { padding: 28px 20px; text-align: center; color: var(--muted); }
+.empty-board strong { display: block; color: var(--ink); font-size: 17px; margin-bottom: 4px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px); z-index: 20; }
+@media (prefers-reduced-motion: no-preference) { .chip { transition: background .15s, color .15s; } }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">Open superlatives board</div>
+    <h1 class="wordmark">Most <span>Likely</span> To</h1>
+    <p class="lede">Pick a prompt, add the names that come to mind, and place each one in a tier. The board shows where everyone's votes land on average.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="notice" class="notice" hidden></div>
+  <div class="layout">
+    <aside>
+      <h2 class="panel-title">Prompts</h2>
+      <div id="prompts" class="prompts"></div>
+      <form id="promptForm" class="add">
+        <label for="promptInput">Add a prompt</label>
+        <div class="field">
+          <input id="promptInput" maxlength="80" placeholder="Who's most likely to…" autocomplete="off">
+          <button class="btn" type="submit">Add</button>
+        </div>
+        <div class="starters" id="starters"></div>
+      </form>
+    </aside>
+
+    <section aria-live="polite">
+      <div id="boardArea"></div>
+    </section>
+  </div>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  const TIERS = [
+    { t: "S", label: "Definitely", score: 5 },
+    { t: "A", label: "Probably", score: 4 },
+    { t: "B", label: "Maybe", score: 3 },
+    { t: "C", label: "Doubt it", score: 2 },
+    { t: "D", label: "Never", score: 1 },
+  ];
+  const STARTERS = ["forget their own birthday", "become famous", "survive a zombie outbreak", "cry at a commercial", "be late to their own wedding"];
+
+  const S = {
+    db: null, me: null, isOwner: false, canWrite: null, readOnly: true, loaded: false,
+    posts: {}, votes: {}, hidden: new Set(),
+    current: null, view: "everyone", picked: null,
+  };
+  try { S.current = localStorage.getItem("mlt.current"); } catch (e) {}
+
+  const $ = (id) => document.getElementById(id);
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "class") el.className = v;
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
+    return el;
+  }
+  const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/-/g, "").slice(0, 16);
+  const clean = (s, max) => s.replace(/\s+/g, " ").trim().slice(0, max);
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+  }
+
+  // ---- derived data ----
+  function allPrompts() {
+    const out = [];
+    for (const [uid, p] of Object.entries(S.posts)) for (const x of (p.prompts || [])) {
+      if (x && x.id && typeof x.text === "string" && !S.hidden.has(x.id)) out.push({ ...x, by: uid });
+    }
+    return out.sort((a, b) => (b.at || 0) - (a.at || 0));
+  }
+  function namesFor(pid) {
+    const out = [], seen = new Set();
+    for (const [uid, p] of Object.entries(S.posts)) for (const x of (p.names || [])) {
+      if (!x || x.promptId !== pid || typeof x.name !== "string" || S.hidden.has(x.id)) continue;
+      const key = x.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key); out.push({ ...x, by: uid });
+    }
+    return out.sort((a, b) => (a.at || 0) - (b.at || 0));
+  }
+  function tally(nameId) {
+    let sum = 0, n = 0;
+    for (const v of Object.values(S.votes)) {
+      const t = v && v.v && v.v[nameId];
+      const tier = TIERS.find((x) => x.t === t);
+      if (tier) { sum += tier.score; n++; }
+    }
+    if (!n) return { n: 0, tier: null };
+    const avg = sum / n;
+    const tier = TIERS.reduce((best, x) => Math.abs(x.score - avg) < Math.abs(best.score - avg) ? x : best);
+    return { n, avg, tier: tier.t };
+  }
+  const myVotes = () => (S.me && S.votes[S.me] && S.votes[S.me].v) || {};
+  const myPosts = () => {
+    const p = (S.me && S.posts[S.me]) || {};
+    return { prompts: [...(p.prompts || [])], names: [...(p.names || [])] };
+  };
+
+  // ---- writes: one at a time per document ----
+  const queues = {};
+  function write(path, body) {
+    const prev = queues[path] || Promise.resolve();
+    const next = prev.then(() => S.db.doc(path).set(body)).catch((e) => {
+      const code = e && e.code;
+      if (code === "invalid_argument") { S.readOnly = true; render(); toast("Your change wasn't saved. This page is view-only for you."); }
+      else if (code === "quota_exceeded") toast("The board is full. The owner needs to remove some entries first.");
+      else if (code === "resource_exhausted") toast("Too many changes at once. Wait a moment and try again.");
+      else toast("Couldn't save that change. Check your connection and try again.");
+    });
+    queues[path] = next;
+    return next;
+  }
+
+  function addPrompt(text) {
+    text = clean(text, 80).replace(/^who'?s most likely to\s*/i, "").replace(/\?+$/, "");
+    if (!text) return;
+    if (allPrompts().some((p) => p.text.toLowerCase() === text.toLowerCase())) { toast("That prompt is already on the board."); return; }
+    const mine = myPosts(); const id = newId();
+    mine.prompts.push({ id, text, at: Date.now() });
+    S.current = id; remember();
+    write("posts/" + S.me, mine);
+  }
+  function addName(name) {
+    name = clean(name, 40);
+    if (!name || !S.current) return;
+    if (namesFor(S.current).some((n) => n.name.toLowerCase() === name.toLowerCase())) { toast(name + " is already on this prompt."); return; }
+    const mine = myPosts();
+    mine.names.push({ id: newId(), promptId: S.current, name, at: Date.now() });
+    write("posts/" + S.me, mine);
+  }
+  function removeOwn(kind, id) {
+    const mine = myPosts();
+    if (kind === "prompt") { mine.prompts = mine.prompts.filter((x) => x.id !== id); mine.names = mine.names.filter((x) => x.promptId !== id); }
+    else mine.names = mine.names.filter((x) => x.id !== id);
+    write("posts/" + S.me, mine);
+  }
+  function hideItem(id) {
+    const ids = new Set(S.hidden); ids.add(id);
+    write("mod/state", { hidden: [...ids] });
+  }
+  function unhideAll() { write("mod/state", { hidden: [] }); }
+  function placeVote(nameId, tier) {
+    const v = { ...myVotes() };
+    if (tier) v[nameId] = tier; else delete v[nameId];
+    S.votes[S.me] = { v };
+    write("votes/" + S.me, { v });
+  }
+  function remember() { try { localStorage.setItem("mlt.current", S.current || ""); } catch (e) {} }
+
+  // ---- render ----
+  function renderNotice() {
+    const n = $("notice");
+    let msg = "";
+    if (!S.db && S.loaded) msg = "Sign in to claude.ai and reopen this page to see the board and vote.";
+    else if (S.db && S.readOnly) msg = "You can see the results. Adding names and voting is open to people the owner has invited to edit.";
+    n.textContent = msg; n.hidden = !msg;
+    $("promptForm").hidden = S.readOnly;
+  }
+
+  function renderPrompts() {
+    const box = $("prompts"); box.replaceChildren();
+    const list = allPrompts();
+    if (!list.some((p) => p.id === S.current)) S.current = list[0] ? list[0].id : null;
+    if (!list.length) {
+      box.append(h("p", { class: "empty-small" }, S.loaded ? "No prompts yet. Add the first one below." : "Loading prompts…"));
+      return;
+    }
+    for (const p of list) {
+      const count = namesFor(p.id).length;
+      box.append(h("button", {
+        class: "prompt-btn", type: "button", "aria-current": String(p.id === S.current),
+        onclick: () => { S.current = p.id; S.picked = null; remember(); render(); },
+      }, h("span", { class: "p-text" }, "…" + p.text + "?"), h("span", { class: "p-count" }, String(count))));
+    }
+  }
+
+  function chipFor(n, opts) {
+    const canRemove = !S.readOnly && (n.by === S.me);
+    const canHide = S.isOwner && n.by !== S.me;
+    const kids = [h("span", { class: "n" }, n.name)];
+    if (opts.count != null) kids.push(h("span", { class: "c", title: opts.count + " vote" + (opts.count === 1 ? "" : "s") }, "×" + opts.count));
+    if (opts.mode === "everyone" && (canRemove || canHide)) {
+      kids.push(h("button", { class: "x", type: "button", "aria-label": (canHide ? "Hide " : "Remove ") + n.name,
+        title: canHide ? "Hide from the board" : "Remove",
+        onclick: (e) => { e.stopPropagation(); canHide ? hideItem(n.id) : removeOwn("name", n.id); toast((canHide ? "Hid " : "Removed ") + n.name); } }, "×"));
+    }
+    if (opts.mode === "mine") {
+      return h("button", { class: "chip pick", type: "button", "aria-pressed": String(S.picked === n.id),
+        onclick: (e) => { e.stopPropagation(); S.picked = S.picked === n.id ? null : n.id; render(); } }, kids);
+    }
+    return h("span", { class: "chip" }, kids);
+  }
+
+  function renderBoard() {
+    const area = $("boardArea"); area.replaceChildren();
+    const prompt = allPrompts().find((p) => p.id === S.current);
+    if (!prompt) {
+      area.append(h("div", { class: "board" }, h("div", { class: "empty-board" },
+        h("strong", {}, S.loaded ? "The board is empty" : "Loading the board…"),
+        S.loaded ? (S.readOnly ? "Nobody has posted a prompt yet." : "Start with a prompt on the left, like “forget their own birthday.”") : "")));
+      return;
+    }
+    const names = namesFor(prompt.id);
+    const mode = S.readOnly ? "everyone" : S.view;
+    const voters = Object.values(S.votes).filter((v) => v && v.v && names.some((n) => v.v[n.id])).length;
+
+    area.append(
+      h("p", { class: "question" }, "Who's most likely to…"),
+      h("h2", { class: "question-big" }, prompt.text + "?"),
+    );
+
+    const tabs = S.readOnly ? h("span") : h("div", { class: "tabs", role: "group", "aria-label": "Board view" },
+      h("button", { type: "button", "aria-pressed": String(mode === "everyone"), onclick: () => { S.view = "everyone"; S.picked = null; render(); } }, "Everyone"),
+      h("button", { type: "button", "aria-pressed": String(mode === "mine"), onclick: () => { S.view = "mine"; render(); } }, "My ranking"));
+    area.append(h("div", { class: "toolbar" }, tabs,
+      h("span", { class: "meta" }, names.length + " name" + (names.length === 1 ? "" : "s") + " · " + voters + " voter" + (voters === 1 ? "" : "s"))));
+
+    const mine = myVotes();
+    const board = h("div", { class: "board" });
+    const placed = new Set();
+    for (const tier of TIERS) {
+      let inTier;
+      if (mode === "mine") inTier = names.filter((n) => mine[n.id] === tier.t);
+      else inTier = names.map((n) => ({ n, s: tally(n.id) })).filter((x) => x.s.tier === tier.t).sort((a, b) => b.s.avg - a.s.avg || b.s.n - a.s.n);
+      const droppable = mode === "mine" && S.picked;
+      const slot = h("div", { class: "slot" });
+      if (mode === "mine") inTier.forEach((n) => { placed.add(n.id); slot.append(chipFor(n, { mode })); });
+      else inTier.forEach(({ n, s }) => { placed.add(n.id); slot.append(chipFor(n, { mode, count: s.n })); });
+      if (!slot.children.length) slot.append(h("span", { class: "slot-empty" }, droppable ? "Tap to place here" : ""));
+      board.append(h("div", {
+        class: "row" + (droppable ? " droppable" : ""), "data-t": tier.t,
+        onclick: droppable ? () => { placeVote(S.picked, tier.t); S.picked = null; render(); } : null,
+      }, h("div", { class: "tier" }, h("b", {}, tier.t), h("small", {}, tier.label)), slot));
+    }
+    area.append(board);
+
+    const rest = names.filter((n) => !placed.has(n.id));
+    const traySlot = h("div", { class: "slot" }, rest.map((n) => chipFor(n, { mode, count: null })));
+    const trayDrop = mode === "mine" && S.picked && mine[S.picked];
+    if (!rest.length) traySlot.append(h("span", { class: "slot-empty" },
+      names.length ? (mode === "mine" ? "You've placed everyone." : "Everyone has at least one vote.") : "No names yet."));
+    area.append(h("div", {
+      class: "tray" + (trayDrop ? " droppable" : ""),
+      onclick: trayDrop ? () => { placeVote(S.picked, null); S.picked = null; render(); } : null,
+    }, h("h3", { class: "panel-title" }, mode === "mine" ? (trayDrop ? "Tap here to take it off your board" : "Not placed yet") : "No votes yet"), traySlot));
+
+    if (mode === "mine" && names.length) area.append(h("p", { class: "hint", style: "margin-top:8px" },
+      S.picked ? "Now tap a tier row to place " + (names.find((n) => n.id === S.picked) || {}).name + "." : "Tap a name, then tap a tier."));
+
+    if (!S.readOnly) {
+      const input = h("input", { id: "nameInput", maxlength: "40", placeholder: "A first name or nickname", autocomplete: "off" });
+      area.append(h("form", { class: "add", onsubmit: (e) => { e.preventDefault(); addName(input.value); input.value = ""; input.focus(); } },
+        h("label", { for: "nameInput" }, "Add someone to this prompt"),
+        h("div", { class: "field" }, input, h("button", { class: "btn", type: "submit" }, "Add")),
+        h("p", { class: "hint" }, "Everyone can see the names on this board. Keep it friendly.")));
+    }
+
+    const ownPrompt = prompt.by === S.me && !S.readOnly;
+    if (ownPrompt || S.isOwner) {
+      const mod = h("div", { class: "mod" });
+      mod.append(h("button", { class: "btn ghost", type: "button", onclick: () => {
+        if (ownPrompt) removeOwn("prompt", prompt.id); else hideItem(prompt.id);
+        toast(ownPrompt ? "Prompt removed" : "Prompt hidden");
+      } }, ownPrompt ? "Remove this prompt" : "Hide this prompt"));
+      if (S.isOwner && S.hidden.size) mod.append(h("button", { class: "btn ghost", type: "button", onclick: () => { unhideAll(); toast("Hidden items restored"); } }, "Restore " + S.hidden.size + " hidden"));
+      area.append(mod);
+    }
+  }
+
+  function render() { renderNotice(); renderPrompts(); renderBoard(); }
+
+  // ---- static bits ----
+  const starters = $("starters");
+  for (const s of STARTERS) starters.append(h("button", { class: "starter", type: "button", onclick: () => { $("promptInput").value = s; $("promptInput").focus(); } }, s));
+  $("promptForm").addEventListener("submit", (e) => { e.preventDefault(); addPrompt($("promptInput").value); $("promptInput").value = ""; });
+
+  render();
+
+  // ---- connect ----
+  async function start() {
+    if (!window.claude || !window.claude.use) { S.loaded = true; render(); return; }
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    S.db = db;
+    if (user) {
+      const [id, owner, can] = await Promise.all([user.id(), user.isOwner(), user.can("data.write")]);
+      S.me = id; S.isOwner = !!owner; S.canWrite = can;
+    }
+    S.readOnly = !db || !S.me || S.canWrite === false;
+    if (!db) { S.loaded = true; render(); return; }
+
+    let pending = 3;
+    const ready = () => { if (pending > 0 && --pending === 0) S.loaded = true; render(); };
+    const fail = () => { S.loaded = true; render(); toast("Lost the live connection. Reload the page to reconnect."); };
+    db.collection("posts").onSnapshot((snap) => {
+      const m = {}; for (const d of snap.docs) if (d.exists) m[d.id] = d.data(); S.posts = m; ready();
+    }, fail);
+    db.collection("votes").onSnapshot((snap) => {
+      const m = {}; for (const d of snap.docs) if (d.exists) m[d.id] = d.data(); S.votes = m; ready();
+    }, fail);
+    db.doc("mod/state").onSnapshot((snap) => {
+      const ids = snap.exists && Array.isArray(snap.data().hidden) ? snap.data().hidden : [];
+      S.hidden = new Set(ids); ready();
+    }, fail);
+  }
+  start().catch(() => { S.loaded = true; render(); });
+})();
+</script>
+
+</body></html>
