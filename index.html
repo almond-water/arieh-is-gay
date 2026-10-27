@@ -358,6 +358,79 @@ main.wrap { padding-bottom: 40px; }
 <input id="pickBoard" class="picker" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
 <input id="pickChat" class="picker" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+// Filled in from the Firebase project's web app settings. These values are not secret:
+// every visitor's browser receives them. What anyone may read or write is set by firestore.rules.
+window.FIREBASE_CONFIG = {
+  "projectId": "most-likely-to-ad6597",
+  "appId": "1:733545526609:web:f1df7f06fcb395ec3b8f70",
+  "apiKey": "AIzaSyAGqTIqyWI82rYEmoL1PxvYXIN0VOaFT1o",
+  "authDomain": "most-likely-to-ad6597.firebaseapp.com",
+  "storageBucket": "most-likely-to-ad6597.firebasestorage.app",
+  "messagingSenderId": "733545526609"
+};
+</script>
+<script>
+// Stand-in for the claude.ai runtime (window.claude.use), backed by Firebase,
+// so the page works for anyone with the link: no sign-in.
+//   db        -> Firestore (the page already speaks its API: doc/collection/onSnapshot)
+//   user      -> a random id kept in this browser; the page asks for a display name
+//   assets    -> pictures stored as data URLs in Firestore (blobs/<id>)
+//   downloads -> a normal browser download
+(() => {
+  if (!window.firebase || !window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.projectId) return;
+  firebase.initializeApp(window.FIREBASE_CONFIG);
+  const db = firebase.firestore();
+
+  const ID_KEY = "mlt.uid";
+  const randomId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/-/g, "").slice(0, 20);
+  let uid = null;
+  try { uid = localStorage.getItem(ID_KEY); } catch (e) {}
+  if (!uid) { uid = randomId(); try { localStorage.setItem(ID_KEY, uid); } catch (e) {} }
+
+  const user = {
+    id: async () => uid,
+    isOwner: async () => false,
+    can: async () => true,
+    // Used when someone types a name that already exists: they become that player on this device.
+    setId: (id) => { uid = id; try { localStorage.setItem(ID_KEY, id); } catch (e) {} }
+  };
+
+  // A Firestore document holds at most 1 MiB; leave room for the other fields.
+  const MAX_DATA_URL = 900000;
+  const err = (code) => Object.assign(new Error(code), { code });
+  const toDataUrl = (blob) => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => rej(err("unsupported_type")); fr.readAsDataURL(blob); });
+  const assets = {
+    async upload(blob, opts) {
+      const type = (opts && opts.type) || blob.type;
+      if (!/^image\/(jpeg|png|webp|gif)$/.test(type)) throw err("unsupported_type");
+      const data = await toDataUrl(blob);
+      if (data.length > MAX_DATA_URL) throw err("too_large");
+      const id = randomId();
+      await db.doc("blobs/" + id).set({ data, type, at: Date.now() });
+      return { id };
+    },
+    async get(id) {
+      const d = await db.doc("blobs/" + id).get();
+      return d.exists ? d.data().data : null;
+    }
+  };
+
+  const downloads = {
+    async save({ filename, data }) {
+      const url = URL.createObjectURL(data);
+      const a = Object.assign(document.createElement("a"), { href: url, download: filename });
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+  };
+
+  const caps = { db, user, assets, downloads };
+  window.claude = { use: async (name) => caps[name] || null };
+})();
+</script>
 <script>
 (() => {
   const TIERS = ["S", "A", "B", "C", "D"];
@@ -388,6 +461,19 @@ main.wrap { padding-bottom: 40px; }
   const clean = (s, max) => String(s || "").replace(/\s+/g, " ").trim().slice(0, max);
   const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const load = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  // Pictures live in the shared database (blobs/<id>) rather than at a URL: fetched once, then cached.
+  const PIXEL = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+  const blobUrls = {}, blobLoads = {};
+  function loadBlob(id) {
+    if (!blobLoads[id]) blobLoads[id] = (S.assets ? S.assets.get(id) : Promise.resolve(null)).catch(() => null)
+      .then((u) => (blobUrls[id] = u || "data:,"));
+    return blobLoads[id];
+  }
+  function blobSrc(id) {
+    if (blobUrls[id]) return blobUrls[id];
+    if (!blobLoads[id]) loadBlob(id).then(() => render());
+    return PIXEL;
+  }
 
   let toastTimer;
   function toast(msg) {
@@ -530,7 +616,16 @@ main.wrap { padding-bottom: 40px; }
     name = clean(name, 24);
     const err = $("joinError");
     if (!name) { err.textContent = "Type a name to continue."; err.hidden = false; return; }
-    const taken = Object.entries(S.players).some(([uid, p]) => uid !== S.me && p && typeof p.name === "string" && p.name.toLowerCase() === name.toLowerCase());
+    const owner = Object.entries(S.players).find(([uid, p]) => uid !== S.me && p && typeof p.name === "string" && p.name.toLowerCase() === name.toLowerCase());
+    // Same name on a new device = same person, so friends can switch between phone and laptop.
+    if (owner && !myName() && S.user) {
+      err.hidden = true;
+      S.me = owner[0]; S.user.setId(S.me);
+      render(); syncSubs();
+      toast("Welcome back, " + S.players[S.me].name);
+      return;
+    }
+    const taken = !!owner;
     if (taken) { err.textContent = name + " is already taken. Try adding an initial."; err.hidden = false; return; }
     err.hidden = true;
     const wasNew = !myName();
@@ -779,7 +874,7 @@ main.wrap { padding-bottom: 40px; }
     const C = { bg: cssVar("--paper") || "#ffffff", ink: cssVar("--ink") || "#1c1c1e", muted: cssVar("--muted") || "#6c6c70", line: cssVar("--line") || "#e2e2df", surface: cssVar("--surface") || "#ffffff" };
     try { await Promise.race([Promise.all([document.fonts.load("600 24px " + fam), document.fonts.load("800 40px " + sys)]), new Promise((r) => setTimeout(r, 3000))]); } catch (e) {}
     const imgs = {};
-    await Promise.all(Object.entries(st.items).filter(([, it]) => it.kind === "image").map(async ([id, it]) => { imgs[id] = await loadImg("/_blob/" + it.asset); }));
+    await Promise.all(Object.entries(st.items).filter(([, it]) => it.kind === "image").map(async ([id, it]) => { imgs[id] = await loadImg(await loadBlob(it.asset)); }));
     const W = 1000, P = 40, SCALE = 2;
     const m = document.createElement("canvas").getContext("2d");
     const titleFit = fitText(m, L.title, W - 2 * P, 200, 44, 24, "800", sys);
@@ -988,7 +1083,7 @@ main.wrap { padding-bottom: 40px; }
   function renderShell() {
     const n = $("notice");
     let msg = "";
-    if (!S.db && S.loaded) msg = "Sign in to claude.ai and reopen this page to see the tier lists.";
+    if (!S.db && S.loaded) msg = "Couldn't reach the shared tier lists. Check your connection and reload the page.";
     else if (S.db && S.readOnly && S.loaded) msg = "You can look at the tier lists, history and chat. Making changes is open to people the owner has invited to edit.";
     n.textContent = msg; n.hidden = !msg;
 
@@ -998,7 +1093,7 @@ main.wrap { padding-bottom: 40px; }
     $("listForm").hidden = S.readOnly;
     if (joining) {
       $("joinTitle").textContent = S.renaming ? "Change your name" : "Enter your name";
-      $("joinIntro").textContent = S.renaming ? "This changes the name shown on everything you've added." : "Pick the name other people will see next to what you add. Next time you open the page, you'll be signed straight in.";
+      $("joinIntro").textContent = S.renaming ? "This changes the name shown on everything you've added." : "Pick the name other people will see next to what you add. On another phone or computer, type the same name to carry on as you.";
       $("joinCancel").hidden = !S.renaming;
     }
     const p = $("player"); p.replaceChildren();
@@ -1026,7 +1121,7 @@ main.wrap { padding-bottom: 40px; }
   function itemEl(id, it, interactive) {
     const title = (it.kind === "image" ? "Picture" : it.text) + " · added by " + playerName(it.by);
     const inner = it.kind === "image"
-      ? h("img", { src: "/_blob/" + it.asset, alt: "Picture added by " + playerName(it.by), loading: "lazy", onerror: (e) => { e.target.replaceWith(h("span", { class: "missing" }, "Picture unavailable")); } })
+      ? h("img", { src: blobSrc(it.asset), alt: "Picture added by " + playerName(it.by), loading: "lazy", onerror: (e) => { e.target.replaceWith(h("span", { class: "missing" }, "Picture unavailable")); } })
       : h("span", { class: "n" }, it.text);
     let size = "";
     if (it.kind === "text") {
@@ -1122,7 +1217,7 @@ main.wrap { padding-bottom: 40px; }
     for (const id of st.order) {
       const it = st.items[id];
       const kids = [it.kind === "image"
-        ? h("img", { src: "/_blob/" + it.asset, alt: "Picture added by " + playerName(it.by), loading: "lazy", onerror: (e) => { e.target.replaceWith(h("span", { class: "b-note" }, "(picture unavailable)")); } })
+        ? h("img", { src: blobSrc(it.asset), alt: "Picture added by " + playerName(it.by), loading: "lazy", onerror: (e) => { e.target.replaceWith(h("span", { class: "b-note" }, "(picture unavailable)")); } })
         : h("span", {}, it.text)];
       if (it.note) kids.push(h("span", { class: "b-note" }, "– " + it.note));
       const cls = "b-item" + (S.justPlaced === id && interactive ? " snap" : "");
@@ -1271,7 +1366,7 @@ main.wrap { padding-bottom: 40px; }
       log.append(h("div", { class: "msg" + (m.by === S.me ? " me" : "") },
         h("span", { class: "m-head" }, h("b", {}, whoName(m.by)), " · " + new Date(m.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })),
         h("span", { class: "m-body" },
-          validAsset(m.image) || validDataImg(m.imageData) ? h("img", { class: "m-img", src: validAsset(m.image) ? "/_blob/" + m.image : m.imageData, alt: "Picture from " + whoName(m.by), loading: "lazy",
+          validAsset(m.image) || validDataImg(m.imageData) ? h("img", { class: "m-img", src: validAsset(m.image) ? blobSrc(m.image) : m.imageData, alt: "Picture from " + whoName(m.by), loading: "lazy",
             onload: () => { const lg = document.querySelector(".chat-log"); if (lg && lg.scrollHeight - lg.scrollTop - lg.clientHeight < 400) lg.scrollTop = lg.scrollHeight; },
             onerror: (e) => { e.target.replaceWith(h("span", { class: "hint" }, "Picture unavailable")); } }) : null,
           m.text ? h("span", {}, m.text) : null)));
@@ -1310,7 +1405,7 @@ main.wrap { padding-bottom: 40px; }
       return;
     }
     area.append(h("h2", { class: "list-title" }, L.title),
-      subtitleEl(st, !S.readOnly && S.tab === "board"),
+      subtitleEl(st, !S.readOnly && S.tab === "board") || "",
       h("p", { class: "by" }, "Made by " + whoName(L.by).replace(/^You$/, "you") +
         (L.updatedAt && L.updatedAt !== L.at ? " · last change " + fmtTime(L.updatedAt) + " by " + whoName(L.updatedBy).replace(/^You$/, "you") : "")));
     const unread = S.tab === "chat" ? 0 : unreadCount();
@@ -1387,7 +1482,7 @@ main.wrap { padding-bottom: 40px; }
   async function start() {
     if (!window.claude || !window.claude.use) { S.loaded = true; render(); return; }
     const [db, user, assets, downloads] = await Promise.all([window.claude.use("db"), window.claude.use("user"), window.claude.use("assets"), window.claude.use("downloads")]);
-    S.db = db; S.assets = assets; S.downloads = downloads;
+    S.db = db; S.assets = assets; S.downloads = downloads; S.user = user;
     if (user) {
       const [id, owner, can] = await Promise.all([user.id(), user.isOwner(), user.can("data.write")]);
       S.me = id; S.isOwner = !!owner; S.canWrite = can;
