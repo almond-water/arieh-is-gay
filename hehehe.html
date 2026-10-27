@@ -1,0 +1,1414 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Most Likely To</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Graduate&family=Oswald:wght@500;600&family=Bungee&family=Permanent+Marker&family=Bangers&family=Fredoka:wght@600&family=Silkscreen&display=swap">
+<style>
+/* Layout: plain notes-app style. Slim top bar, gray sidebar of lists, white page with the board and Board / History / Chat tabs (stacks on phones). */
+:root {
+  --paper: #ffffff;
+  --surface: #ffffff;
+  --side: #f3f3f1;
+  --ink: #1c1c1e;
+  --muted: #6c6c70;
+  --line: #e2e2df;
+  --band: #ffffff;
+  --on-band: #1c1c1e;
+  --gold: #a77a00;
+  --gold-soft: #fcf3d6;
+  --focus: #2f6fdb;
+  --danger: #c5282f;
+  --t-s: #e5484d; --t-a: #f0883e; --t-b: #e8c13c; --t-c: #4aa85a; --t-d: #4a82de;
+  --on-tier: #1c1c1e;
+  --chip: #f1f1ef;
+  --chip-sel: #1c1c1e; --on-chip-sel: #ffffff;
+  --mine: #fbf0c9;
+  --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --tile: "Oswald", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #1c1c1e; --surface: #242426; --side: #18181a; --ink: #f2f2f4; --muted: #a1a1a6; --line: #38383b;
+  --band: #1c1c1e; --on-band: #f2f2f4; --gold: #e8b923; --gold-soft: #3b3215; --focus: #6ea2ff; --danger: #ff7a7f;
+  --chip: #2f2f32; --chip-sel: #f2f2f4; --on-chip-sel: #1c1c1e; --mine: #3b3215; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --paper: #1c1c1e; --surface: #242426; --side: #18181a; --ink: #f2f2f4; --muted: #a1a1a6; --line: #38383b;
+  --band: #1c1c1e; --on-band: #f2f2f4; --gold: #e8b923; --gold-soft: #3b3215; --focus: #6ea2ff; --danger: #ff7a7f;
+  --chip: #2f2f32; --chip-sel: #f2f2f4; --on-chip-sel: #1c1c1e; --mine: #3b3215; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+.band { background: var(--band); color: var(--on-band); }
+.band .wrap { padding-block: 28px 30px; display: grid; gap: 10px; }
+.wordmark { font-family: var(--display); font-size: clamp(34px, 7vw, 64px); line-height: 1; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+.wordmark span { color: var(--gold); }
+.lede { margin: 0; max-width: 60ch; opacity: .85; }
+.player { margin: 4px 0 0; font-size: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.player b { color: var(--gold); }
+.player button { background: transparent; border: 1px solid currentColor; color: var(--on-band); border-radius: 999px; padding: 2px 10px; font-size: 12px; opacity: .8; }
+
+.notice { margin-top: 16px; padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid var(--gold); background: var(--surface); border-radius: 6px; font-size: 14px; }
+.join { max-width: 520px; margin: 32px auto 48px; padding: 24px; background: var(--surface); border: 2px solid var(--ink); border-radius: 10px; }
+.join-title { font-family: var(--display); font-size: 26px; margin: 0 0 6px; }
+.join-error { color: var(--danger); }
+
+.layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 24px; padding-block: 24px 48px; align-items: start; }
+@media (max-width: 760px) { .layout { grid-template-columns: minmax(0, 1fr); gap: 18px; } }
+
+.panel-title { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.lists { display: grid; gap: 6px; }
+.list-btn { text-align: left; width: 100%; padding: 10px 12px; background: transparent; border: 1px solid transparent; border-radius: 8px; display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; }
+.list-btn:hover { background: var(--surface); border-color: var(--line); }
+.list-btn[aria-current="true"] { background: var(--surface); border-color: var(--ink); }
+.list-btn .l-text { min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.list-btn .l-count { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+@media (max-width: 760px) {
+  .lists { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
+  .list-btn { width: auto; flex: none; max-width: 240px; border-color: var(--line); background: var(--surface); }
+}
+.empty-small { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+
+form.add { display: grid; gap: 6px; margin-top: 14px; }
+form.add label, .add-label { font-size: 13px; font-weight: 600; }
+.field { display: flex; gap: 6px; flex-wrap: wrap; }
+.field input { flex: 1 1 160px; min-width: 0; padding: 9px 11px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; }
+.btn { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); font-weight: 600; flex: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn.small { padding: 5px 10px; font-size: 13px; }
+.btn.danger { border-color: var(--danger); color: var(--danger); background: transparent; }
+.btn.danger.armed { background: var(--danger); color: var(--surface); }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+.picker { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.exp-error { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--gold-soft); font-size: 14px; text-align: center; }
+.file-btn { position: relative; overflow: hidden; display: inline-flex; align-items: center; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.list-title { font-family: var(--display); font-size: clamp(24px, 4vw, 36px); line-height: 1.15; margin: 0 0 4px; text-wrap: balance; overflow-wrap: anywhere; }
+.by { margin: 0 0 16px; font-size: 13px; color: var(--muted); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.tabs { display: inline-flex; border: 1px solid var(--ink); border-radius: 8px; overflow: hidden; }
+.tabs button { padding: 7px 14px; background: transparent; border: 0; font-weight: 600; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.badge { font-family: var(--mono); font-size: 11px; background: var(--gold); color: var(--on-tier); border-radius: 999px; padding: 0 6px; line-height: 18px; }
+.meta { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.board { border: 2px solid var(--ink); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.row { display: grid; grid-template-columns: 110px minmax(0, 1fr); border-top: 1px solid var(--line); min-height: 84px; }
+.row:first-child { border-top: 0; }
+.tier { display: grid; place-content: center; text-align: center; color: var(--on-tier); padding: 6px; min-width: 0; position: relative; }
+.tier .t-label { font-family: var(--tile); line-height: 1.05; overflow-wrap: anywhere; font-size: calc(15px * var(--fs, 1)); }
+.tier .t-label.short { font-size: calc(32px * var(--fs, 1)); }
+.tier button.t-edit { background: transparent; border: 0; padding: 4px; border-radius: 6px; color: inherit; }
+.tier button.t-edit:hover { background: rgba(255,255,255,.25); }
+.tier { gap: 4px; }
+.t-color { justify-self: center; background: rgba(255,255,255,.35); border: 0; border-radius: 999px; padding: 1px 8px; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--on-tier); }
+.t-color:hover, .t-color[aria-expanded="true"] { background: rgba(255,255,255,.7); }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--paper); }
+.swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); padding: 0; }
+.swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--ink); }
+.tier input { width: 96px; max-width: 100%; padding: 5px 6px; border-radius: 6px; border: 2px solid var(--on-tier); background: rgba(255,255,255,.85); color: var(--on-tier); font-weight: 700; text-align: center; }
+.row[data-t="S"] .tier { background: var(--t-s); } .row[data-t="A"] .tier { background: var(--t-a); }
+.row[data-t="B"] .tier { background: var(--t-b); } .row[data-t="C"] .tier { background: var(--t-c); }
+.row[data-t="D"] .tier { background: var(--t-d); }
+@media (max-width: 480px) { .row { grid-template-columns: 84px minmax(0, 1fr); } }
+.slot { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-content: center; align-items: center; min-width: 0; }
+.droppable .slot { cursor: pointer; background: repeating-linear-gradient(135deg, transparent 0 8px, var(--gold-soft) 8px 10px); }
+.droppable .slot:hover, .drag-over .slot { outline: 2px dashed var(--gold); outline-offset: -4px; }
+.slot-empty { color: var(--muted); font-size: 13px; }
+
+.tray { margin-top: 14px; padding: 12px; border: 1px dashed var(--line); border-radius: 10px; background: var(--surface); }
+.tray.droppable, .tray.drag-over { border-color: var(--gold); }
+.tray .slot { padding: 6px 0 0; }
+
+.item { display: inline-flex; align-items: center; max-width: 100%; border-radius: 10px; background: var(--chip); border: 2px solid var(--line); font-weight: 600; font-size: 14px; padding: 0; color: var(--ink); }
+.item.text { width: 68px; height: 68px; padding: 5px; border-radius: 10px; display: grid; place-content: center; text-align: center; font-family: var(--tile); font-weight: 600; line-height: 1.05; overflow: hidden; }
+.item.text .n { overflow-wrap: anywhere; hyphens: auto; }
+.item.text.len-l { font-size: calc(19px * var(--fs, 1)); } .item.text.len-m { font-size: calc(15px * var(--fs, 1)); } .item.text.len-s { font-size: calc(12.5px * var(--fs, 1)); } .item.text.len-xs { font-size: calc(11px * var(--fs, 1)); }
+.solo { width: 100%; padding: 9px 11px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; }
+.new-list .btn { justify-self: start; }
+.seg { display: inline-flex; border: 1px solid var(--ink); border-radius: 8px; overflow: hidden; justify-self: start; }
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.seg span { display: block; padding: 6px 14px; font-weight: 600; font-size: 14px; }
+.seg input:checked + span { background: var(--ink); color: var(--paper); }
+.seg input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: -2px; }
+.list-sub { margin: 0 0 6px; font-size: 18px; color: var(--muted); overflow-wrap: anywhere; }
+button.list-sub { background: transparent; border: 0; padding: 0; text-align: left; cursor: text; }
+button.list-sub:hover { color: var(--ink); }
+.add-sub { background: transparent; border: 1px dashed var(--line); border-radius: 8px; padding: 3px 10px; font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+.add-sub:hover { color: var(--ink); border-color: var(--ink); }
+#subInput { width: 100%; max-width: 520px; padding: 6px 10px; border: 1px solid var(--ink); border-radius: 8px; background: var(--surface); font-size: 16px; margin: 0 0 8px; }
+.list-card { padding: 14px 18px 14px 14px; }
+.blist { list-style: disc; margin: 0; padding: 0 0 0 1.5em; display: grid; gap: 2px; font-family: var(--tile); font-size: calc(22px * var(--fs, 1)); line-height: 1.3; }
+.blist li::marker { color: var(--ink); }
+.b-item { display: inline-flex; align-items: center; gap: 10px; max-width: 100%; background: transparent; border: 2px solid transparent; border-radius: 8px; padding: 2px 8px; font: inherit; color: var(--ink); text-align: left; overflow-wrap: anywhere; }
+button.b-item { cursor: pointer; }
+button.b-item:hover { color: var(--gold); }
+button.b-item[aria-pressed="true"] { border: 2px dashed var(--gold); color: var(--gold); }
+.b-item img { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; display: block; }
+.b-note { color: var(--muted); }
+.blist-empty { color: var(--muted); font-family: var(--body); font-size: 14px; list-style: none; margin-left: -1.5em; }
+.note-field { display: flex; gap: 6px; flex: 1 1 220px; min-width: 0; }
+.note-field input { flex: 1; min-width: 0; padding: 5px 9px; border: 1px solid var(--gold); border-radius: 6px; background: var(--surface); }
+.present-sub { margin: -6px 0 0; text-align: center; font-size: 20px; color: var(--muted); overflow-wrap: anywhere; }
+.present .blist { font-size: calc(30px * var(--fs, 1)); }
+.present .list-card { padding: 20px 28px; }
+.fonts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 14px; }
+.font-chip { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-size: 16px; line-height: 1.2; }
+.font-chip[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.present .item.text { width: 80px; height: 80px; }
+.present .item.text.len-l { font-size: calc(22px * var(--fs, 1)); } .present .item.text.len-m { font-size: calc(17px * var(--fs, 1)); } .present .item.text.len-s { font-size: calc(14px * var(--fs, 1)); }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes snap-in { 0% { transform: scale(1.28) translateY(-8px); opacity: .55; } 50% { transform: scale(.9) translateY(0); opacity: 1; } 75% { transform: scale(1.05); } 100% { transform: scale(1); } }
+  @keyframes slot-flash { 0% { background-color: var(--gold-soft); } 100% { background-color: transparent; } }
+  @keyframes tier-thump { 0% { transform: scale(1); } 40% { transform: scale(.94); } 100% { transform: scale(1); } }
+  .item.snap, .b-item.snap { animation: snap-in .36s cubic-bezier(.2, .9, .3, 1.25); }
+  .row.flash .slot, .tray.flash .slot { animation: slot-flash .6s ease-out; }
+  .row.flash .tier > * { animation: tier-thump .3s ease-out; }
+}
+.item.img { width: 68px; height: 68px; overflow: hidden; background: var(--line); }
+.item.img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.item.img .missing { font-size: 11px; color: var(--muted); padding: 4px; text-align: center; width: 100%; }
+button.item { cursor: pointer; }
+button.item[aria-pressed="true"] { border-color: var(--chip-sel); box-shadow: 0 0 0 2px var(--chip-sel); }
+.item.text { background: transparent; border-color: transparent; }
+button.item.text:hover { color: var(--gold); }
+button.item.text[aria-pressed="true"] { background: transparent; color: var(--gold); border: 2px dashed var(--gold); box-shadow: none; }
+.item[draggable="true"] { cursor: grab; }
+
+.picked-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 10px; border-radius: 10px; background: var(--gold-soft); border: 1px solid var(--gold); font-size: 14px; }
+.picked-bar .actions { display: flex; gap: 6px; }
+
+.add-box { margin-top: 14px; display: grid; gap: 8px; }
+.list-foot { margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.empty-board { padding: 28px 20px; text-align: center; color: var(--muted); }
+.empty-board strong { display: block; color: var(--ink); font-size: 17px; margin-bottom: 4px; }
+
+.versions { list-style: none; margin: 0; padding: 0; }
+.v-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: center; }
+.v-row:first-child { border-top: 0; }
+.v-who { font-weight: 600; }
+.v-when { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.v-notes { grid-column: 1 / -1; font-size: 14px; color: var(--muted); margin: 0; overflow-wrap: anywhere; }
+.v-current { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.v-banner { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 14px; margin-bottom: 12px; border-radius: 10px; border: 1px solid var(--gold); background: var(--gold-soft); }
+.v-banner .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.chat { display: grid; gap: 10px; }
+.chat-log { border: 2px solid var(--ink); border-radius: 10px; background: var(--surface); height: min(60vh, 460px); overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.msg { max-width: 85%; display: grid; gap: 2px; }
+.msg .m-head { font-size: 12px; color: var(--muted); }
+.msg .m-head b { color: var(--ink); font-weight: 600; }
+.msg .m-body { background: var(--chip); border-radius: 12px; padding: 8px 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.msg.me { align-self: flex-end; text-align: right; }
+.msg.me .m-body { background: var(--mine); text-align: left; }
+.chat-empty { margin: auto; color: var(--muted); text-align: center; }
+.chat form { display: flex; gap: 6px; }
+.chat input { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px); z-index: 20; }
+.credit { position: fixed; left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); margin: 0; padding: 4px 10px; border-radius: 999px; background: var(--band); color: var(--on-band); font-size: 12px; z-index: 15; pointer-events: none; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.credit b { color: var(--gold); font-weight: 700; }
+.toolbar-right { display: inline-flex; gap: 10px; align-items: center; }
+body.presenting .band, body.presenting aside, body.presenting #notice, body.presenting .credit, body.presenting #join { display: none !important; }
+body.presenting .layout { grid-template-columns: minmax(0, 1fr); padding-block: 28px; }
+body.presenting main.wrap { padding-bottom: 28px; max-width: 980px; }
+.present { display: grid; gap: 16px; }
+.present-title { font-family: var(--tile); font-size: clamp(28px, 5vw, 48px); line-height: 1.1; margin: 0; text-align: center; text-wrap: balance; overflow-wrap: anywhere; }
+.present .row { min-height: 96px; }
+.present .item.img { width: 80px; height: 80px; }
+.present-exit { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: calc(12px + env(safe-area-inset-right, 0px)); z-index: 30; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--ink); background: var(--surface); color: var(--ink); font-weight: 600; font-size: 13px; opacity: 0; pointer-events: none; }
+.present-exit.show, .present-exit:focus-visible { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: no-preference) { .present-exit { transition: opacity .25s; } }
+
+/* Plainer look */
+.band { border-bottom: 1px solid var(--line); }
+.band .wrap { padding-block: 14px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; justify-content: space-between; }
+.wordmark { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
+.wordmark span { color: inherit; }
+.player { margin: 0; color: var(--muted); }
+.player b { color: var(--ink); }
+.player button { border-color: var(--line); color: var(--ink); opacity: 1; }
+.layout { padding-block: 20px 48px; }
+aside { background: var(--side); border-radius: 12px; padding: 12px; }
+.list-btn:hover { background: rgba(127,127,127,.08); border-color: transparent; }
+.list-btn[aria-current="true"] { background: var(--gold-soft); border-color: transparent; }
+@media (max-width: 760px) { .list-btn { background: var(--surface); border-color: var(--line); } }
+.panel-title, .v-current, .h-day, .t-color { text-transform: none; letter-spacing: 0; }
+.panel-title { font-size: 13px; font-weight: 600; }
+.list-title, .join-title, .present-title { font-family: var(--display); font-weight: 800; letter-spacing: -0.015em; }
+.join { border: 1px solid var(--line); border-radius: 14px; }
+.board, .chat-log { border: 1px solid var(--line); border-radius: 12px; }
+.row { border-top-color: var(--line); }
+.tray { border-style: solid; border-color: var(--line); border-radius: 12px; }
+.tabs, .seg { border: 0; background: var(--side); padding: 2px; border-radius: 9px; }
+.tabs button, .seg span { border-radius: 7px; }
+.tabs button[aria-pressed="true"], .seg input:checked + span { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
+.badge { background: var(--danger); color: #fff; }
+.btn { border-radius: 9px; }
+.btn.ghost { border-color: var(--line); }
+.font-chip { border-radius: 9px; }
+.notice { border-left-width: 1px; border-radius: 10px; background: var(--gold-soft); border-color: transparent; }
+.credit { background: transparent; color: var(--muted); box-shadow: none; padding: 0; }
+.credit b { color: var(--ink); }
+.t-color { font-size: 11px; font-weight: 600; }
+.v-current { color: var(--muted); font-weight: 600; }
+
+/* Row settings (gear) */
+.tier .t-label { color: inherit; }
+.board.editable .row { grid-template-columns: 110px minmax(0, 1fr) 44px; }
+@media (max-width: 480px) { .board.editable .row { grid-template-columns: 84px minmax(0, 1fr) 40px; } }
+.gear-cell { display: grid; place-items: center; border-left: 1px solid var(--line); }
+.gear { width: 34px; height: 34px; border-radius: 8px; border: 0; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 0; }
+.gear:hover { background: var(--chip); color: var(--ink); }
+.gear-ico svg { display: block; }
+.modal-back { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.45); display: grid; place-items: center; overflow-y: auto;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal { position: relative; width: min(640px, 100%); background: var(--surface); color: var(--ink); border-radius: 16px; padding: 24px; display: grid; gap: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+.m-title { margin: 0; font-size: 17px; font-weight: 700; text-align: center; }
+.m-close { position: absolute; top: 10px; right: 12px; width: 36px; height: 36px; border: 0; background: transparent; font-size: 26px; line-height: 1; color: var(--muted); border-radius: 8px; }
+.m-close:hover { background: var(--chip); color: var(--ink); }
+.m-swatches { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.m-swatches .swatch { width: 40px; height: 40px; }
+#gearName { width: 100%; resize: vertical; min-height: 56px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-size: 18px; }
+.m-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 420px) { .m-actions { grid-template-columns: 1fr; } }
+.m-btn { padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); font-weight: 600; }
+.m-btn:hover { border-color: var(--ink); }
+.m-btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.m-done { justify-self: center; min-width: 140px; }
+.toolbar.bottom { position: sticky; bottom: 0; z-index: 12; margin: 20px 0 0; padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--paper); }
+.v-actions { display: inline-flex; gap: 6px; }
+.msg .m-body { display: grid; gap: 6px; }
+.m-img { display: block; max-width: min(260px, 100%); max-height: 320px; border-radius: 10px; object-fit: cover; }
+.v-warn { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--danger); }
+.exp-img { width: 100%; height: auto; max-height: 60vh; object-fit: contain; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); -webkit-touch-callout: default; user-select: auto; }
+
+/* Faint preview of where a held item will land */
+.ghost { display: none !important; opacity: .3; pointer-events: none; animation: none !important; }
+.ghost.text { border: 2px dashed var(--muted) !important; color: var(--ink) !important; }
+.ghost.img { outline: 2px dashed var(--muted); outline-offset: -2px; }
+.row:hover .ghost.text, .tray:hover .ghost.text, .drag-over .ghost.text { display: grid !important; }
+.row:hover .ghost.img, .tray:hover .ghost.img, .drag-over .ghost.img { display: inline-flex !important; }
+@media (hover: none) {
+  .droppable .ghost.text { display: grid !important; opacity: .22; }
+  .droppable .ghost.img { display: inline-flex !important; opacity: .22; }
+}
+
+/* Selected tier list: plain white card instead of yellow */
+.list-btn[aria-current="true"] { background: var(--surface); border-color: transparent; box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0,0,0,.06); }
+@media (max-width: 760px) { .list-btn[aria-current="true"] { border-color: var(--ink); box-shadow: none; } }
+/* Chat: just the text, no bubbles */
+.msg .m-body, .msg.me .m-body { background: transparent; padding: 0; border-radius: 0; }
+.msg { gap: 0; }
+main.wrap { padding-bottom: 40px; }
+@media (prefers-reduced-motion: no-preference) { .item { transition: border-color .15s, box-shadow .15s, background .15s; } }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <h1 class="wordmark">Most <span>Likely</span> To</h1>
+    <p id="player" class="player" hidden></p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="notice" class="notice" hidden></div>
+  <section id="join" class="join" hidden>
+    <h2 id="joinTitle" class="join-title">Enter your name</h2>
+    <p id="joinIntro" class="hint">Pick the name other people will see next to what you add.</p>
+    <form id="joinForm" class="add">
+      <label for="joinName">Your name</label>
+      <div class="field">
+        <input id="joinName" maxlength="24" placeholder="e.g. Arieh" autocomplete="nickname">
+        <button class="btn" type="submit">Save</button>
+      </div>
+      <p id="joinError" class="hint join-error" hidden></p>
+      <div><button id="joinCancel" class="btn ghost" type="button" hidden>Cancel</button></div>
+    </form>
+  </section>
+  <div id="layout" class="layout">
+    <aside>
+      <h2 class="panel-title">Tier lists</h2>
+      <div id="lists" class="lists"></div>
+      <form id="listForm" class="add new-list">
+        <label for="listInput">Make a new tier list</label>
+        <input id="listInput" class="solo" maxlength="80" placeholder="Title, e.g. Best pizza toppings" autocomplete="off">
+        <input id="listSub" class="solo" maxlength="80" placeholder="Subtitle (optional)" aria-label="Subtitle (optional)" autocomplete="off">
+        <div class="seg" role="radiogroup" aria-label="Layout">
+          <label><input type="radio" name="newLayout" value="tiers" checked><span>Tiers</span></label>
+          <label><input type="radio" name="newLayout" value="list"><span>List</span></label>
+        </div>
+        <button class="btn" type="submit">Create</button>
+      </form>
+    </aside>
+    <section id="boardArea" aria-live="polite"></section>
+  </div>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+<input id="pickBoard" class="picker" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
+<input id="pickChat" class="picker" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
+
+<script>
+(() => {
+  const TIERS = ["S", "A", "B", "C", "D"];
+  const MAX_VERSIONS = 100;
+  const COALESCE_MS = 0;
+
+  const S = {
+    db: null, assets: null, me: null, isOwner: false, canWrite: null, readOnly: true, loaded: false,
+    players: {}, lists: {}, versions: [], chat: [],
+    current: null, tab: "board", picked: null, viewing: null, editingTier: null,
+    renaming: false, uploading: false, armed: null,
+  };
+  try { S.current = localStorage.getItem("tl.current"); } catch (e) {}
+
+  const $ = (id) => document.getElementById(id);
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "class") el.className = v;
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
+    return el;
+  }
+  const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/-/g, "").slice(0, 16);
+  const clean = (s, max) => String(s || "").replace(/\s+/g, " ").trim().slice(0, max);
+  const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const load = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+  }
+
+  const dayLabel = (ms) => {
+    const d = new Date(ms), now = new Date();
+    if (d.toDateString() === now.toDateString()) return "Today";
+    const y = new Date(now); y.setDate(now.getDate() - 1);
+    if (d.toDateString() === y.toDateString()) return "Yesterday";
+    return d.toLocaleDateString([], { month: "short", day: "numeric", year: d.getFullYear() === now.getFullYear() ? undefined : "numeric" });
+  };
+  const fmtTime = (ms) => dayLabel(ms) + " " + new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+  // ---- data shape ----
+  const DK = "#1c1c1e", LT = "#ffffff";
+  const PALETTE = {
+    red: ["Red", "#e5484d", DK], orange: ["Orange", "#f0883e", DK], yellow: ["Yellow", "#e8c13c", DK], lime: ["Lime", "#a6d24c", DK],
+    green: ["Green", "#4aa85a", DK], teal: ["Teal", "#3cbfae", DK], sky: ["Sky", "#62b6f0", DK], blue: ["Blue", "#4a82de", DK],
+    purple: ["Purple", "#a57cf0", DK], pink: ["Pink", "#f07ab6", DK], brown: ["Brown", "#b98a5e", DK], gray: ["Gray", "#aab1c2", DK],
+    maroon: ["Maroon", "#8e2a3a", LT], coral: ["Coral", "#ff8a6b", DK], peach: ["Peach", "#f6c08f", DK], gold: ["Gold", "#d4a72c", DK],
+    olive: ["Olive", "#8a9a3b", DK], mint: ["Mint", "#8fe0b0", DK], navy: ["Navy", "#2c3f7a", LT], violet: ["Violet", "#6f45d6", LT],
+    lavender: ["Lavender", "#cbb8f5", DK], magenta: ["Magenta", "#d63f9e", DK], black: ["Black", "#262626", LT], white: ["White", "#f4f4f2", DK],
+  };
+  const COLOR_ALIAS = { cyan: "teal", indigo: "violet", charcoal: "black", silver: "gray" };
+  const DEFAULT_COLORS = { S: "red", A: "orange", B: "yellow", C: "green", D: "blue" };
+  const MAX_ROWS = 15;
+  const validRowId = (r) => typeof r === "string" && /^[A-Za-z0-9_-]{1,24}$/.test(r);
+  const tierStyle = (st, r) => { const p = PALETTE[st.colors[r]] || PALETTE.gray; return "background:" + p[1] + ";color:" + p[2]; };
+  const GEAR_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+  function gearIcon() { const s = document.createElement("span"); s.className = "gear-ico"; s.innerHTML = GEAR_SVG; return s; }
+  const FONTS = {
+    tall: ["Tall", "'Oswald', 'Arial Narrow', sans-serif", 1],
+    blocky: ["Blocky", "'Bungee', Impact, sans-serif", 0.78],
+    marker: ["Marker", "'Permanent Marker', 'Comic Sans MS', cursive", 0.9],
+    comic: ["Comic", "'Bangers', Impact, sans-serif", 1.05],
+    round: ["Round", "'Fredoka', system-ui, sans-serif", 0.95],
+    pixel: ["Pixel", "'Silkscreen', 'Courier New', monospace", 0.72],
+    varsity: ["Varsity", "'Graduate', 'Rockwell', serif", 0.8],
+  };
+  const fontVars = (st) => "--tile:" + FONTS[st.font][1] + ";--fs:" + FONTS[st.font][2];
+  const LAYOUTS = { tiers: "Tiers", list: "List" };
+  const emptyState = () => ({ layout: "tiers", subtitle: "", rows: [...TIERS], labels: { S: "S", A: "A", B: "B", C: "C", D: "D" }, colors: { ...DEFAULT_COLORS }, font: "tall", tiers: { S: [], A: [], B: [], C: [], D: [] }, pool: [], order: [], items: {} });
+  const validAsset = (a) => typeof a === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(a);
+  function norm(st) {
+    const s = emptyState();
+    if (!st || typeof st !== "object") return s;
+    const rawRows = Array.isArray(st.rows) ? [...new Set(st.rows.filter(validRowId))].slice(0, MAX_ROWS) : null;
+    if (rawRows && rawRows.length) {
+      s.rows = rawRows; s.labels = {}; s.colors = {}; s.tiers = {};
+      for (const r of s.rows) { s.labels[r] = TIERS.includes(r) ? r : ""; s.colors[r] = DEFAULT_COLORS[r] || "gray"; s.tiers[r] = []; }
+    }
+    const labels = st.labels && typeof st.labels === "object" ? st.labels : {};
+    for (const r of s.rows) if (typeof labels[r] === "string") s.labels[r] = labels[r].slice(0, 40);
+    const colors = st.colors && typeof st.colors === "object" ? st.colors : {};
+    for (const r of s.rows) { let c = colors[r]; if (COLOR_ALIAS[c]) c = COLOR_ALIAS[c]; if (Object.prototype.hasOwnProperty.call(PALETTE, c)) s.colors[r] = c; }
+    if (Object.prototype.hasOwnProperty.call(FONTS, st.font)) s.font = st.font;
+    if (Object.prototype.hasOwnProperty.call(LAYOUTS, st.layout)) s.layout = st.layout;
+    if (typeof st.subtitle === "string") s.subtitle = st.subtitle.slice(0, 80);
+    const items = st.items && typeof st.items === "object" ? st.items : {};
+    for (const [id, it] of Object.entries(items)) {
+      if (!it) continue;
+      const note = typeof it.note === "string" ? it.note.slice(0, 40) : "";
+      if (it.kind === "text" && typeof it.text === "string") s.items[id] = { kind: "text", text: it.text.slice(0, 40), note, by: it.by, at: it.at };
+      else if (it.kind === "image" && validAsset(it.asset)) s.items[id] = { kind: "image", asset: it.asset, note, by: it.by, at: it.at };
+    }
+    const seen = new Set();
+    const tiers = st.tiers && typeof st.tiers === "object" ? st.tiers : {};
+    for (const t of s.rows) for (const id of (Array.isArray(tiers[t]) ? tiers[t] : [])) if (s.items[id] && !seen.has(id)) { seen.add(id); s.tiers[t].push(id); }
+    for (const id of (Array.isArray(st.pool) ? st.pool : [])) if (s.items[id] && !seen.has(id)) { seen.add(id); s.pool.push(id); }
+    for (const id of Object.keys(s.items)) if (!seen.has(id)) s.pool.push(id);
+    const inOrder = new Set();
+    for (const id of (Array.isArray(st.order) ? st.order : [])) if (s.items[id] && !inOrder.has(id)) { inOrder.add(id); s.order.push(id); }
+    s.order.push(...Object.keys(s.items).filter((id) => !inOrder.has(id)).sort((a, b) => (s.items[a].at || 0) - (s.items[b].at || 0)));
+    return s;
+  }
+  const playerName = (uid) => (S.players[uid] && typeof S.players[uid].name === "string" && S.players[uid].name) || "Someone";
+  const whoName = (uid) => uid === S.me ? "You" : playerName(uid);
+  const myName = () => S.me && S.players[S.me] && S.players[S.me].name;
+  const listsSorted = () => Object.entries(S.lists).filter(([, l]) => l && typeof l.title === "string")
+    .map(([id, l]) => ({ id, ...l })).sort((a, b) => (b.updatedAt || b.at || 0) - (a.updatedAt || a.at || 0));
+  const curList = () => S.current && S.lists[S.current] ? { id: S.current, ...S.lists[S.current] } : null;
+  const itemLabel = (it) => it.kind === "image" ? "a picture" : "“" + it.text + "”";
+  function whereIs(st, id) { for (const t of st.rows) if (st.tiers[t].includes(id)) return t; return null; }
+
+  // ---- writes: one at a time per document ----
+  const queues = {};
+  function onWriteError(e) {
+    const code = e && e.code;
+    if (code === "invalid_argument") { S.readOnly = true; render(); toast("That change wasn't saved. This page is view-only for you."); }
+    else if (code === "quota_exceeded") toast("Storage is full. Delete an old tier list to make room.");
+    else if (code === "resource_exhausted") toast("Too many changes at once. Wait a moment and try again.");
+    else toast("Couldn't save that change. Check your connection and try again.");
+  }
+  function queued(path, op) {
+    const prev = queues[path] || Promise.resolve();
+    const next = prev.then(op).catch(onWriteError);
+    queues[path] = next;
+    return next;
+  }
+  const write = (path, body) => queued(path, () => S.db.doc(path).set(body));
+  const remove = (path) => queued(path, () => S.db.doc(path).delete());
+
+  // ---- versions ----
+  let lastV = null;
+  function recordVersion(listId, st, note, fresh) {
+    const now = Date.now();
+    const base = "lists/" + listId + "/versions/";
+    if (!fresh && lastV && lastV.list === listId && now - lastV.touched < COALESCE_MS) {
+      lastV.notes = [...lastV.notes, note].slice(-6); lastV.touched = now;
+      write(base + lastV.id, { by: S.me, at: lastV.at, updatedAt: now, notes: lastV.notes, state: st });
+    } else {
+      const vid = newId();
+      lastV = { list: listId, id: vid, at: now, touched: now, notes: [note] };
+      write(base + vid, { by: S.me, at: now, updatedAt: now, notes: [note], state: st }).then(() => prune(listId));
+    }
+  }
+  async function prune(listId) {
+    try {
+      const snap = await S.db.doc("lists/" + listId).collection("versions").orderBy("updatedAt", "desc").get();
+      for (const d of snap.docs.slice(MAX_VERSIONS)) await S.db.doc("lists/" + listId + "/versions/" + d.id).delete();
+    } catch (e) {}
+  }
+
+  function mutate(fn, note, opts) {
+    const L = curList(); if (!L || S.readOnly) return;
+    const st = norm(L.state);
+    if (fn(st) === false) return;
+    const body = { title: L.title, by: L.by, at: L.at, updatedAt: Date.now(), updatedBy: S.me, state: st };
+    S.lists[L.id] = body;
+    render();
+    write("lists/" + L.id, body);
+    recordVersion(L.id, st, note, opts && opts.fresh);
+  }
+
+  // ---- actions ----
+  function join(name) {
+    name = clean(name, 24);
+    const err = $("joinError");
+    if (!name) { err.textContent = "Type a name to continue."; err.hidden = false; return; }
+    const taken = Object.entries(S.players).some(([uid, p]) => uid !== S.me && p && typeof p.name === "string" && p.name.toLowerCase() === name.toLowerCase());
+    if (taken) { err.textContent = name + " is already taken. Try adding an initial."; err.hidden = false; return; }
+    err.hidden = true;
+    const wasNew = !myName();
+    const body = { name, at: (S.players[S.me] && S.players[S.me].at) || Date.now() };
+    S.players[S.me] = body; S.renaming = false;
+    write("players/" + S.me, body);
+    render();
+    toast(wasNew ? "Welcome, " + name : "Name changed to " + name);
+  }
+  function createList(title, subtitle, layout) {
+    title = clean(title, 80);
+    if (!title) return;
+    const id = newId(), now = Date.now(), st = emptyState();
+    st.subtitle = clean(subtitle, 80);
+    if (LAYOUTS[layout]) st.layout = layout;
+    const body = { title, by: S.me, at: now, updatedAt: now, updatedBy: S.me, state: st };
+    S.lists[id] = body; S.current = id; S.tab = "board"; S.picked = null; S.viewing = null;
+    store("tl.current", id);
+    write("lists/" + id, body);
+    recordVersion(id, st, "Created the list", true);
+    render(); syncSubs();
+  }
+  function deleteList(id) {
+    delete S.lists[id];
+    if (S.current === id) { S.current = null; S.viewing = null; }
+    remove("lists/" + id);
+    render(); syncSubs();
+    toast("Tier list deleted");
+  }
+  function addText(text) {
+    text = clean(text, 40);
+    if (!text) return;
+    mutate((st) => {
+      if (Object.values(st.items).some((it) => it.kind === "text" && it.text.toLowerCase() === text.toLowerCase())) { toast("“" + text + "” is already on this list."); return false; }
+      const id = newId(); st.items[id] = { kind: "text", text, by: S.me, at: Date.now() }; st.pool.push(id);
+    }, "Added “" + text + "”");
+  }
+  async function shrink(file, maxSide, forceType, quality) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const max = maxSide || 480, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * k)), hgt = Math.max(1, Math.round(img.naturalHeight * k));
+      const c = document.createElement("canvas"); c.width = w; c.height = hgt;
+      c.getContext("2d").drawImage(img, 0, 0, w, hgt);
+      const type = forceType || ((file.type === "image/png" || file.type === "image/gif") ? "image/png" : "image/jpeg");
+      if (type === "image/jpeg") { const cx = c.getContext("2d"); cx.globalCompositeOperation = "destination-over"; cx.fillStyle = "#ffffff"; cx.fillRect(0, 0, w, hgt); }
+      const blob = await new Promise((res) => c.toBlob(res, type, quality || 0.85));
+      return blob;
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function addImage(file) {
+    if (!file) return;
+    if (!S.assets) { toast("Pictures can only be added by people who can edit this page."); return; }
+    if (!/^image\//.test(file.type)) { toast("That file isn't a picture. Try a JPG or PNG."); return; }
+    S.uploading = true; render();
+    try {
+      let blob;
+      try { blob = await shrink(file); } catch (e) { blob = null; }
+      if (!blob) { toast("That picture format isn't supported. Try a JPG or PNG."); return; }
+      const r = await S.assets.upload(blob, { type: blob.type });
+      mutate((st) => { const id = newId(); st.items[id] = { kind: "image", asset: r.id, by: S.me, at: Date.now() }; st.pool.push(id); }, "Added a picture");
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "too_large") toast("That picture is too big. Try a smaller one.");
+      else if (code === "unsupported_type") toast("That picture format isn't supported. Try a JPG or PNG.");
+      else if (code === "quota_or_state") toast("Picture storage is full. Remove some pictures first.");
+      else if (code === "rate_limited") toast("Too many uploads at once. Wait a moment and try again.");
+      else toast("Couldn't upload that picture (" + (code || (e && e.message) || "unknown error") + "). Try again.");
+    } finally { S.uploading = false; render(); }
+  }
+  function moveItem(id, tier) {
+    const L = curList(); if (!L) return;
+    const it = norm(L.state).items[id]; if (!it) return;
+    mutate((st) => {
+      if (whereIs(st, id) === tier) return false;
+      if (tier && !st.tiers[tier]) return false;
+      for (const t of st.rows) st.tiers[t] = st.tiers[t].filter((x) => x !== id);
+      st.pool = st.pool.filter((x) => x !== id);
+      if (tier) st.tiers[tier].push(id); else st.pool.push(id);
+      S.justPlaced = id; S.justTier = tier || "pool";
+      playSnap();
+      try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
+    }, "Moved " + itemLabel(it) + " to " + (tier ? norm(L.state).labels[tier] : "Unranked"));
+    S.justPlaced = null; S.justTier = null;
+  }
+  let actx;
+  function playSnap() {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") actx.resume();
+      const t = actx.currentTime;
+      // Bubble-wrap pop: a very short burst of filtered noise plus a tiny low "body" thump.
+      const len = Math.floor(actx.sampleRate * 0.03);
+      const buf = actx.createBuffer(1, len, actx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 5);
+      const src = actx.createBufferSource(); src.buffer = buf;
+      const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 500;
+      const bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1700 + Math.random() * 1000; bp.Q.value = 1.4;
+      const g = actx.createGain(); g.gain.setValueAtTime(0.7, t);
+      src.connect(hp); hp.connect(bp); bp.connect(g); g.connect(actx.destination);
+      src.start(t);
+      const o = actx.createOscillator(), og = actx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(230 + Math.random() * 70, t);
+      o.frequency.exponentialRampToValueAtTime(90, t + 0.03);
+      og.gain.setValueAtTime(0.0001, t);
+      og.gain.exponentialRampToValueAtTime(0.1, t + 0.002);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+      o.connect(og); og.connect(actx.destination);
+      o.start(t); o.stop(t + 0.05);
+    } catch (e) {}
+  }
+  function removeItem(id) {
+    const L = curList(); if (!L) return;
+    const it = norm(L.state).items[id]; if (!it) return;
+    mutate((st) => {
+      delete st.items[id];
+      for (const t of st.rows) st.tiers[t] = st.tiers[t].filter((x) => x !== id);
+      st.pool = st.pool.filter((x) => x !== id);
+    }, "Removed " + itemLabel(it));
+    toast("Removed. You can bring it back from History.");
+  }
+  const rowName = (st, r) => "“" + (st.labels[r] || "blank") + "”";
+  function renameTier(t, label) {
+    label = clean(label, 40);
+    const L = curList(); if (!L) return;
+    const st0 = norm(L.state); if (!st0.tiers[t]) return;
+    const old = st0.labels[t];
+    if (label === old) return;
+    mutate((st) => { st.labels[t] = label; }, "Renamed the row " + rowName(st0, t) + " to “" + (label || "blank") + "”");
+  }
+  function rowAction(r, kind) {
+    const L = curList(); if (!L) return;
+    const st0 = norm(L.state); if (!st0.tiers[r]) { S.gear = null; render(); return; }
+    if (kind === "delete") {
+      if (st0.rows.length <= 1) { toast("A tier list needs at least one row."); return; }
+      S.gear = null;
+      mutate((st) => { st.pool.push(...st.tiers[r]); st.rows = st.rows.filter((x) => x !== r); delete st.tiers[r]; delete st.labels[r]; delete st.colors[r]; }, "Deleted the row " + rowName(st0, r));
+      toast("Row deleted. Its items moved to Unranked.");
+    } else if (kind === "clear") {
+      if (!st0.tiers[r].length) { toast("That row is already empty."); return; }
+      mutate((st) => { st.pool.push(...st.tiers[r]); st.tiers[r] = []; }, "Cleared the row " + rowName(st0, r));
+      toast("Moved everything in that row to Unranked.");
+    } else if (kind === "above" || kind === "below") {
+      if (st0.rows.length >= MAX_ROWS) { toast("A tier list can have up to " + MAX_ROWS + " rows."); return; }
+      const nid = "r" + newId().slice(0, 10);
+      S.gear = nid;
+      mutate((st) => { const i = st.rows.indexOf(r); st.rows.splice(kind === "above" ? i : i + 1, 0, nid); st.tiers[nid] = []; st.labels[nid] = "New"; st.colors[nid] = "gray"; }, "Added a row " + kind + " " + rowName(st0, r));
+    }
+  }
+  function setLayout(key) {
+    const L = curList(); if (!L || !LAYOUTS[key]) return;
+    if (norm(L.state).layout === key) return;
+    S.picked = null;
+    mutate((st) => { st.layout = key; }, "Switched to the " + LAYOUTS[key] + " layout");
+  }
+  function setSubtitle(text) {
+    const L = curList(); if (!L) return;
+    text = clean(text, 80);
+    const old = norm(L.state).subtitle;
+    if (text === old) { render(); return; }
+    mutate((st) => { st.subtitle = text; }, text ? "Changed the subtitle to “" + text + "”" : "Removed the subtitle");
+  }
+  function setNote(id, note) {
+    const L = curList(); if (!L) return;
+    const it = norm(L.state).items[id]; if (!it) return;
+    note = clean(note, 40);
+    if (note === it.note) return;
+    mutate((st) => { st.items[id].note = note; }, note ? "Added the note “" + note + "” to " + itemLabel(it) : "Removed the note from " + itemLabel(it));
+    toast(note ? "Note saved" : "Note removed");
+  }
+  function moveInOrder(id, dir) {
+    const L = curList(); if (!L) return;
+    const it = norm(L.state).items[id]; if (!it) return;
+    mutate((st) => {
+      const i = st.order.indexOf(id), j = i + dir;
+      if (i < 0 || j < 0 || j >= st.order.length) return false;
+      [st.order[i], st.order[j]] = [st.order[j], st.order[i]];
+      S.justPlaced = id; playSnap();
+    }, "Moved " + itemLabel(it) + (dir < 0 ? " up" : " down"));
+    S.justPlaced = null;
+  }
+  function setFont(key) {
+    const L = curList(); if (!L || !FONTS[key]) return;
+    if (norm(L.state).font === key) return;
+    mutate((st) => { st.font = key; }, "Changed the font to " + FONTS[key][0]);
+  }
+  function recolorTier(t, key) {
+    const L = curList(); if (!L || !PALETTE[key]) return;
+    const st0 = norm(L.state); if (!st0.tiers[t]) return;
+    if (st0.colors[t] === key) return;
+    mutate((st) => { st.colors[t] = key; }, "Made the row " + rowName(st0, t) + " " + PALETTE[key][0].toLowerCase());
+  }
+  function undoVersion(v, prev, i) {
+    const notes = Array.isArray(v.notes) ? v.notes.filter((x) => typeof x === "string").join(", ") : "";
+    const snap = norm(prev.state);
+    mutate((st) => { Object.assign(st, snap); }, i === 0 ? "Undid: " + (notes || "a change") : "Undid " + (i + 1) + " changes, back to " + fmtTime(prev.updatedAt || prev.at), { fresh: true });
+    toast("Undone");
+  }
+
+  // ---- save as picture (drawn on a canvas, so it matches the board) ----
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function wrapText(ctx, text, maxW) {
+    const splitWord = (w) => {
+      if (ctx.measureText(w).width <= maxW) return [w];
+      const parts = []; let cur = "";
+      for (const ch of w) { if (cur && ctx.measureText(cur + ch).width > maxW) { parts.push(cur); cur = ch; } else cur += ch; }
+      if (cur) parts.push(cur); return parts;
+    };
+    const lines = []; let line = "";
+    for (const w0 of String(text).split(/\s+/).filter(Boolean)) for (const w of splitWord(w0)) {
+      const test = line ? line + " " + w : w;
+      if (!line || ctx.measureText(test).width <= maxW) line = test; else { lines.push(line); line = w; }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+  function fitText(ctx, text, maxW, maxH, startPx, minPx, weight, fam) {
+    for (let px = Math.round(startPx); px >= minPx; px--) {
+      ctx.font = weight + " " + px + "px " + fam;
+      const lines = wrapText(ctx, text, maxW);
+      const wordsFit = String(text).split(/\s+/).every((w) => ctx.measureText(w).width <= maxW);
+      if (wordsFit && lines.length * px * 1.12 <= maxH) return { px, lines };
+    }
+    ctx.font = weight + " " + minPx + "px " + fam;
+    return { px: minPx, lines: wrapText(ctx, text, maxW) };
+  }
+  function drawLines(ctx, fit, cx, cy, weight, fam, color, align) {
+    ctx.font = weight + " " + fit.px + "px " + fam; ctx.fillStyle = color; ctx.textAlign = align || "center"; ctx.textBaseline = "middle";
+    const lh = fit.px * 1.12, top = cy - (fit.lines.length - 1) * lh / 2;
+    fit.lines.forEach((ln, k) => ctx.fillText(ln, cx, top + k * lh));
+  }
+  function roundRect(ctx, x, y, w, hh, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + hh, r); ctx.arcTo(x + w, y + hh, x, y + hh, r); ctx.arcTo(x, y + hh, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  const loadImg = (src) => new Promise((res) => { const i = new Image(); const t = setTimeout(() => res(null), 8000); i.onload = () => { clearTimeout(t); res(i); }; i.onerror = () => { clearTimeout(t); res(null); }; i.src = src; });
+  function drawCover(ctx, img, x, y, w, hh, r) {
+    ctx.save(); roundRect(ctx, x, y, w, hh, r); ctx.clip();
+    const s = Math.max(w / img.naturalWidth, hh / img.naturalHeight), iw = img.naturalWidth * s, ih = img.naturalHeight * s;
+    ctx.drawImage(img, x + (w - iw) / 2, y + (hh - ih) / 2, iw, ih); ctx.restore();
+  }
+  async function renderImage(L) {
+    const st = norm(L.state);
+    const fam = FONTS[st.font][1], fs = FONTS[st.font][2];
+    const sys = cssVar("--display") || "sans-serif";
+    const C = { bg: cssVar("--paper") || "#ffffff", ink: cssVar("--ink") || "#1c1c1e", muted: cssVar("--muted") || "#6c6c70", line: cssVar("--line") || "#e2e2df", surface: cssVar("--surface") || "#ffffff" };
+    try { await Promise.race([Promise.all([document.fonts.load("600 24px " + fam), document.fonts.load("800 40px " + sys)]), new Promise((r) => setTimeout(r, 3000))]); } catch (e) {}
+    const imgs = {};
+    await Promise.all(Object.entries(st.items).filter(([, it]) => it.kind === "image").map(async ([id, it]) => { imgs[id] = await loadImg("/_blob/" + it.asset); }));
+    const W = 1000, P = 40, SCALE = 2;
+    const m = document.createElement("canvas").getContext("2d");
+    const titleFit = fitText(m, L.title, W - 2 * P, 200, 44, 24, "800", sys);
+    const titleH = titleFit.lines.length * titleFit.px * 1.12;
+    const subFit = st.subtitle ? fitText(m, st.subtitle, W - 2 * P, 120, 24, 16, "400", sys) : null;
+    const subH = subFit ? subFit.lines.length * subFit.px * 1.12 + 10 : 0;
+    const LABEL = 150, CELL = 88, GAP = 10, RP = 12;
+    const innerW = W - 2 * P - LABEL - 2 * RP;
+    const perRow = Math.max(1, Math.floor((innerW + GAP) / (CELL + GAP)));
+    let contentH = 0, rowsH = [], listRows = [];
+    if (st.layout === "list") {
+      const px = Math.round(30 * fs);
+      for (const id of st.order) {
+        const it = st.items[id];
+        const text = it.kind === "image" ? (it.note ? "– " + it.note : "") : it.text + (it.note ? " – " + it.note : "");
+        const textW = W - 2 * P - 48 - (it.kind === "image" ? 86 : 0);
+        m.font = "600 " + px + "px " + fam;
+        const lines = text ? wrapText(m, text, textW) : [];
+        const hh = Math.max(it.kind === "image" ? 72 : 0, lines.length * px * 1.25) + 12;
+        listRows.push({ id, it, lines, px, hh }); contentH += hh;
+      }
+      contentH += 28;
+    } else {
+      for (const r of st.rows) { const n = st.tiers[r].length; const lines = Math.max(1, Math.ceil(n / perRow)); const hh = lines * (CELL + GAP) - GAP + 2 * RP; rowsH.push(hh); contentH += hh; }
+    }
+    const H = Math.ceil(P + titleH + subH + 24 + contentH + P);
+    const cv = document.createElement("canvas"); cv.width = W * SCALE; cv.height = H * SCALE;
+    const ctx = cv.getContext("2d"); ctx.scale(SCALE, SCALE);
+    ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+    let y = P;
+    drawLines(ctx, titleFit, W / 2, y + titleH / 2, "800", sys, C.ink);
+    y += titleH;
+    if (subFit) { y += 10; drawLines(ctx, subFit, W / 2, y + (subH - 10) / 2, "400", sys, C.muted); y += subH - 10; }
+    y += 24;
+    const bx = P, bw = W - 2 * P;
+    ctx.save(); roundRect(ctx, bx, y, bw, contentH, 14); ctx.fillStyle = C.surface; ctx.fill(); ctx.clip();
+    if (st.layout === "list") {
+      let yy = y + 14;
+      for (const row of listRows) {
+        const cy = yy + row.hh / 2;
+        ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(bx + 26, row.it.kind === "image" ? cy : yy + 6 + row.px * 0.62, 5, 0, Math.PI * 2); ctx.fill();
+        let tx = bx + 48;
+        if (row.it.kind === "image") { const img = imgs[row.id]; if (img) drawCover(ctx, img, tx, cy - 36, 72, 72, 10); tx += 86; }
+        ctx.font = "600 " + row.px + "px " + fam; ctx.fillStyle = C.ink; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        const lh = row.px * 1.25, top = cy - (row.lines.length - 1) * lh / 2;
+        row.lines.forEach((ln, k) => ctx.fillText(ln, tx, top + k * lh));
+        yy += row.hh;
+      }
+    } else {
+      let yy = y;
+      st.rows.forEach((r, ri) => {
+        const hh = rowsH[ri], p = PALETTE[st.colors[r]] || PALETTE.gray;
+        ctx.fillStyle = p[1]; ctx.fillRect(bx, yy, LABEL, hh);
+        const label = st.labels[r] || "";
+        if (label) drawLines(ctx, fitText(ctx, label, LABEL - 16, hh - 16, (label.length <= 2 ? 44 : 24) * fs, 10, "600", fam), bx + LABEL / 2, yy + hh / 2, "600", fam, p[2]);
+        st.tiers[r].forEach((id, k) => {
+          const it = st.items[id];
+          const cx0 = bx + LABEL + RP + (k % perRow) * (CELL + GAP), cy0 = yy + RP + Math.floor(k / perRow) * (CELL + GAP);
+          if (it.kind === "image") { const img = imgs[id]; if (img) drawCover(ctx, img, cx0, cy0, CELL, CELL, 10); else { ctx.fillStyle = C.line; roundRect(ctx, cx0, cy0, CELL, CELL, 10); ctx.fill(); } }
+          else {
+            const len = it.text.length;
+            const start = (len <= 5 ? 24 : len <= 10 ? 19 : 15) * fs;
+            drawLines(ctx, fitText(ctx, it.text, CELL - 8, CELL - 8, start, 9, "600", fam), cx0 + CELL / 2, cy0 + CELL / 2, "600", fam, C.ink);
+          }
+        });
+        if (ri > 0) { ctx.fillStyle = C.line; ctx.fillRect(bx, yy, bw, 1); }
+        yy += hh;
+      });
+    }
+    ctx.restore();
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1; roundRect(ctx, bx + 0.5, y + 0.5, bw - 1, contentH - 1, 14); ctx.stroke();
+    return cv;
+  }
+  async function saveImage() {
+    const L = curList(); if (!L) return;
+    S.showExport = true; S.exportUrl = null; S.exportBlob = null; S.exportError = null; render();
+    try {
+      const cv = await renderImage(L);
+      const dataUrl = cv.toDataURL("image/png");
+      if (!dataUrl || dataUrl.length < 100) throw new Error("the picture came out empty");
+      let blob = null;
+      try { blob = await new Promise((r) => cv.toBlob(r, "image/png")); } catch (e) {}
+      if (!blob) { const bin = atob(dataUrl.split(",")[1]); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); blob = new Blob([u8], { type: "image/png" }); }
+      S.exportBlob = blob; S.exportUrl = dataUrl;
+      S.exportName = (L.title.replace(/[^A-Za-z0-9 _-]+/g, "").trim().slice(0, 60) || "tier list") + ".png";
+    } catch (e) { S.exportError = (e && e.message) || "unknown error"; }
+    render();
+  }
+  async function downloadImage() {
+    if (!S.downloads || !S.exportBlob) return;
+    try { await S.downloads.save({ filename: S.exportName, data: S.exportBlob }); toast("Saved"); }
+    catch (e) {
+      const code = e && e.code;
+      if (code === "declined") return;
+      if (code === "rate_limited") toast("A save is already open. Finish that one first.");
+      else toast("Download didn't work here (" + (code || "unknown") + "). Press and hold, or right-click, the picture to save it.");
+    }
+  }
+  function exportModal() {
+    const close = () => { S.showExport = false; render(); };
+    return h("div", { class: "modal-back", onclick: close },
+      h("div", { class: "modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "expTitle", onclick: (e) => e.stopPropagation() },
+        h("button", { class: "m-close", type: "button", "aria-label": "Close", onclick: close }, "×"),
+        h("h3", { id: "expTitle", class: "m-title" }, "Save as a picture"),
+        S.exportError ? h("p", { class: "exp-error" }, "Couldn't make the picture: " + S.exportError + ".")
+          : S.exportUrl ? h("img", { class: "exp-img", src: S.exportUrl, alt: "Picture of the tier list" }) : h("p", { class: "hint", style: "text-align:center" }, "Making the picture…"),
+        S.exportUrl ? h("p", { class: "hint", style: "text-align:center" }, S.downloads
+          ? "Tap Download picture. On a phone you can also press and hold the picture, then choose Save to Photos."
+          : "Press and hold the picture (or right-click it on a computer) and choose Save to Photos or Save Image.") : null,
+        S.downloads && S.exportUrl ? h("button", { class: "btn m-done", type: "button", onclick: downloadImage }, "Download picture") : null));
+  }
+  function restoreVersion(v) {
+    const snap = norm(v.state);
+    mutate((st) => { Object.assign(st, snap); }, "Restored the version from " + fmtTime(v.updatedAt || v.at), { fresh: true });
+    S.viewing = null; render();
+    toast("Version restored");
+  }
+  const blobToDataUrl = (blob) => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => rej(new Error("read failed")); fr.readAsDataURL(blob); });
+  const validDataImg = (d) => typeof d === "string" && d.length < 250000 && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(d);
+  async function sendChatImage(file) {
+    if (!file) return;
+    if (file.type && !/^image\//.test(file.type)) { toast("That file isn't a picture. Try a JPG or PNG."); return; }
+    S.chatUploading = true; render();
+    try {
+      // First choice: the page's picture storage. If that isn't available here, the picture is shrunk and sent inside the message itself.
+      if (S.assets) {
+        try {
+          const big = await shrink(file, 1280);
+          if (big) { const r = await S.assets.upload(big, { type: big.type }); sendChat("", r.id); return; }
+        } catch (e) { /* fall through to the in-message copy */ }
+      }
+      let data = null;
+      for (const side of [720, 480, 320]) {
+        const small = await shrink(file, side, "image/jpeg", 0.72);
+        if (!small) break;
+        const d = await blobToDataUrl(small);
+        if (validDataImg(d)) { data = d; break; }
+      }
+      if (!data) { toast("That picture couldn't be read. Try a JPG or PNG."); return; }
+      sendChat("", null, data);
+    } catch (e) {
+      toast("Couldn't send that picture (" + ((e && (e.code || e.message)) || "unknown error") + "). Try again.");
+    } finally { S.chatUploading = false; render(); }
+  }
+  function sendChat(text, image, imageData) {
+    text = String(text || "").trim().slice(0, 500);
+    const L = curList(); if ((!text && !image && !imageData) || !L) return;
+    const id = Date.now().toString(36) + "-" + newId().slice(0, 6);
+    const msg = { by: S.me, text, at: Date.now() };
+    if (image) msg.image = image;
+    if (imageData) msg.imageData = imageData;
+    S.chat = [...S.chat, { id, ...msg }];
+    render();
+    write("lists/" + L.id + "/chat/" + id, msg);
+  }
+
+  // ---- subscriptions (keyed, opened once per list/tab) ----
+  const subs = {};
+  function sub(key, open) {
+    if (subs[key]) return;
+    subs[key] = open();
+  }
+  function unsubExcept(prefix, keep) {
+    for (const k of Object.keys(subs)) if (k.startsWith(prefix) && k !== keep) { try { subs[k](); } catch (e) {} delete subs[k]; }
+  }
+  function syncSubs() {
+    if (!S.db) return;
+    const L = curList();
+    const chatKey = L ? "chat:" + L.id : null;
+    unsubExcept("chat:", chatKey);
+    if (chatKey && !subs[chatKey]) { S.chat = []; }
+    if (chatKey) sub(chatKey, () => S.db.doc("lists/" + L.id).collection("chat").orderBy("at", "desc").limit(150).onSnapshot((snap) => {
+      S.chat = snap.docs.filter((d) => d.exists).map((d) => ({ id: d.id, ...d.data() })).filter((m) => (typeof m.text === "string" || validAsset(m.image) || validDataImg(m.imageData)) && typeof m.at === "number").reverse();
+      render();
+    }, () => {}));
+    const histKey = L && S.tab === "history" ? "hist:" + L.id : null;
+    unsubExcept("hist:", histKey);
+    if (histKey && !subs[histKey]) S.versions = [];
+    if (histKey) sub(histKey, () => S.db.doc("lists/" + L.id).collection("versions").orderBy("updatedAt", "desc").limit(MAX_VERSIONS).onSnapshot((snap) => {
+      S.versions = snap.docs.filter((d) => d.exists).map((d) => ({ id: d.id, ...d.data() }));
+      render();
+    }, () => {}));
+  }
+
+  function setList(id) { S.current = id; S.picked = null; S.viewing = null; S.editingTier = null; S.coloring = null; S.editingSub = false; S.gear = null; S.armed = null; store("tl.current", id); render(); syncSubs(); }
+  function setTab(tab) {
+    S.tab = tab; S.picked = null; S.viewing = null; S.editingTier = null; S.coloring = null; S.gear = null;
+    if (tab === "chat") markChatSeen();
+    render(); syncSubs();
+    if (tab === "chat") { const box = document.querySelector(".chat-log"); if (box) box.scrollTop = box.scrollHeight; const inp = $("chatInput"); if (inp) inp.focus(); }
+  }
+  function markChatSeen() {
+    const L = curList(); if (!L) return;
+    const last = S.chat.length ? S.chat[S.chat.length - 1].at : Date.now();
+    store("tl.seen." + L.id, String(last));
+  }
+  function unreadCount() {
+    const L = curList(); if (!L) return 0;
+    const seen = Number(load("tl.seen." + L.id) || 0);
+    return S.chat.filter((m) => m.at > seen && m.by !== S.me).length;
+  }
+
+  // ---- render ----
+  const needsJoin = () => S.loaded && !S.readOnly && (!myName() || S.renaming);
+
+  function renderShell() {
+    const n = $("notice");
+    let msg = "";
+    if (!S.db && S.loaded) msg = "Sign in to claude.ai and reopen this page to see the tier lists.";
+    else if (S.db && S.readOnly && S.loaded) msg = "You can look at the tier lists, history and chat. Making changes is open to people the owner has invited to edit.";
+    n.textContent = msg; n.hidden = !msg;
+
+    const joining = needsJoin();
+    $("join").hidden = !joining;
+    $("layout").hidden = joining;
+    $("listForm").hidden = S.readOnly;
+    if (joining) {
+      $("joinTitle").textContent = S.renaming ? "Change your name" : "Enter your name";
+      $("joinIntro").textContent = S.renaming ? "This changes the name shown on everything you've added." : "Pick the name other people will see next to what you add. Next time you open the page, you'll be signed straight in.";
+      $("joinCancel").hidden = !S.renaming;
+    }
+    const p = $("player"); p.replaceChildren();
+    const name = myName();
+    p.hidden = !(name && !S.readOnly);
+    if (name) p.append("Signed in as ", h("b", {}, name),
+      S.renaming ? null : h("button", { type: "button", onclick: () => { S.renaming = true; $("joinName").value = name; render(); $("joinName").focus(); } }, "Change name"));
+  }
+
+  function renderLists() {
+    const box = $("lists"); box.replaceChildren();
+    const list = listsSorted();
+    if (S.loaded && !list.some((l) => l.id === S.current)) { S.current = list[0] ? list[0].id : null; }
+    if (!list.length) {
+      box.append(h("p", { class: "empty-small" }, S.loaded ? (S.readOnly ? "No tier lists yet." : "No tier lists yet. Make the first one below.") : "Loading…"));
+      return;
+    }
+    for (const l of list) {
+      const count = Object.keys(norm(l.state).items).length;
+      box.append(h("button", { class: "list-btn", type: "button", "aria-current": String(l.id === S.current), onclick: () => setList(l.id) },
+        h("span", { class: "l-text" }, l.title), h("span", { class: "l-count", title: count + " items" }, String(count))));
+    }
+  }
+
+  function itemEl(id, it, interactive) {
+    const title = (it.kind === "image" ? "Picture" : it.text) + " · added by " + playerName(it.by);
+    const inner = it.kind === "image"
+      ? h("img", { src: "/_blob/" + it.asset, alt: "Picture added by " + playerName(it.by), loading: "lazy", onerror: (e) => { e.target.replaceWith(h("span", { class: "missing" }, "Picture unavailable")); } })
+      : h("span", { class: "n" }, it.text);
+    let size = "";
+    if (it.kind === "text") {
+      const len = it.text.length, longest = Math.max(...it.text.split(" ").map((w) => w.length));
+      size = len <= 5 ? "len-l" : len <= 10 && longest <= 8 ? "len-m" : len <= 20 && longest <= 10 ? "len-s" : "len-xs";
+    }
+    const cls = "item " + (it.kind === "image" ? "img" : "text " + size) + (interactive && S.justPlaced === id ? " snap" : "");
+    if (!interactive) return h("span", { class: cls, title }, inner);
+    return h("button", {
+      class: cls, type: "button", title, "aria-pressed": String(S.picked === id), draggable: "true",
+      ondragstart: (e) => {
+        S.dragId = id;
+        try { e.dataTransfer.setData("text/plain", id); e.dataTransfer.effectAllowed = "move"; } catch (x) {}
+        const src = e.currentTarget;
+        setTimeout(() => {
+          document.querySelectorAll("#boardArea .row, #boardArea .tray").forEach((z) => {
+            if (z.contains(src)) return;
+            const slot = z.querySelector(".slot"); if (!slot) return;
+            const g = src.cloneNode(true);
+            g.classList.remove("snap"); g.classList.add("ghost");
+            g.removeAttribute("draggable"); g.setAttribute("aria-hidden", "true"); g.setAttribute("tabindex", "-1");
+            slot.append(g);
+          });
+        }, 0);
+      },
+      ondragend: () => { S.dragId = null; document.querySelectorAll("#boardArea .ghost").forEach((g) => g.remove()); },
+      onclick: (e) => { e.stopPropagation(); S.picked = S.picked === id ? null : id; render(); },
+    }, inner);
+  }
+  function ghostEl(st, id) {
+    const g = itemEl(id, st.items[id], false);
+    g.classList.add("ghost");
+    g.setAttribute("aria-hidden", "true");
+    return g;
+  }
+  function dropZone(el, tier) {
+    el.addEventListener("dragover", (e) => { if (!S.dragId) return; e.preventDefault(); el.classList.add("drag-over"); });
+    el.addEventListener("dragleave", () => el.classList.remove("drag-over"));
+    el.addEventListener("drop", (e) => { e.preventDefault(); el.classList.remove("drag-over"); const id = S.dragId; S.dragId = null; if (id) { S.picked = null; moveItem(id, tier); } });
+  }
+
+  function tierLabelEl(t, st) {
+    const label = st.labels[t] || "";
+    return h("span", { class: "t-label" + (label.length <= 2 ? " short" : "") }, label);
+  }
+  function gearModal(st, r) {
+    const nameInput = h("textarea", { id: "gearName", maxlength: "40", rows: "2", "aria-label": "Row name", placeholder: "Row name" });
+    nameInput.value = st.labels[r] || "";
+    const commit = () => { const v = clean(nameInput.value, 40); if (v !== (st.labels[r] || "")) renameTier(r, v); };
+    const close = () => { commit(); S.gear = null; S.armedRow = null; render(); };
+    nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); close(); } });
+    const swatches = Object.entries(PALETTE).map(([key, [name, hex]]) => h("button", { class: "swatch", type: "button", title: name, "aria-label": name,
+      "aria-pressed": String(st.colors[r] === key), style: "background:" + hex, onclick: () => { commit(); recolorTier(r, key); } }));
+    const armed = S.armedRow === r;
+    const act = (label, kind, cls) => h("button", { class: "m-btn" + (cls || ""), type: "button", onclick: () => {
+      commit();
+      if (kind === "delete" && !armed) { S.armedRow = r; render(); return; }
+      S.armedRow = null; rowAction(r, kind);
+    } }, label);
+    const dialog = h("div", { class: "modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "gearTitle", onclick: (e) => e.stopPropagation() },
+      h("button", { class: "m-close", type: "button", "aria-label": "Close", onclick: close }, "×"),
+      h("h3", { id: "gearTitle", class: "m-title" }, "Choose a row color"),
+      h("div", { class: "m-swatches" }, swatches),
+      h("label", { class: "m-title", for: "gearName" }, "Row name"),
+      nameInput,
+      h("div", { class: "m-actions" },
+        act(armed ? "Tap again to delete" : "Delete row", "delete", armed ? " danger" : ""),
+        act("Clear row", "clear"),
+        act("Add a row above", "above"),
+        act("Add a row below", "below")),
+      h("button", { class: "btn m-done", type: "button", onclick: close }, "Done"));
+    return h("div", { class: "modal-back", onclick: close }, dialog);
+  }
+
+  function boardEl(st, interactive) {
+    const board = h("div", { class: "board" + (interactive ? " editable" : ""), style: fontVars(st) });
+    for (const t of st.rows) {
+      const droppable = interactive && S.picked && whereIs(st, S.picked) !== t;
+      const slot = h("div", { class: "slot" }, st.tiers[t].map((id) => itemEl(id, st.items[id], interactive)));
+      if (droppable) slot.append(ghostEl(st, S.picked));
+      const gear = interactive ? h("div", { class: "gear-cell" }, h("button", { class: "gear", type: "button", title: "Row settings", "aria-label": "Settings for the row " + (st.labels[t] || "blank"),
+        onclick: (e) => { e.stopPropagation(); S.gear = t; S.armedRow = null; S.picked = null; render(); } }, gearIcon())) : null;
+      const row = h("div", { class: "row" + (droppable ? " droppable" : "") + (interactive && S.justTier === t ? " flash" : ""), "data-t": t,
+        onclick: droppable ? () => { const id = S.picked; S.picked = null; moveItem(id, t); } : null },
+        h("div", { class: "tier", style: tierStyle(st, t) }, tierLabelEl(t, st)), slot, gear);
+      if (interactive) dropZone(row, t);
+      board.append(row);
+    }
+    return board;
+  }
+  function listEl(st, interactive) {
+    const ul = h("ul", { class: "blist" });
+    for (const id of st.order) {
+      const it = st.items[id];
+      const kids = [it.kind === "image"
+        ? h("img", { src: "/_blob/" + it.asset, alt: "Picture added by " + playerName(it.by), loading: "lazy", onerror: (e) => { e.target.replaceWith(h("span", { class: "b-note" }, "(picture unavailable)")); } })
+        : h("span", {}, it.text)];
+      if (it.note) kids.push(h("span", { class: "b-note" }, "– " + it.note));
+      const cls = "b-item" + (S.justPlaced === id && interactive ? " snap" : "");
+      ul.append(h("li", {}, interactive
+        ? h("button", { class: cls, type: "button", "aria-pressed": String(S.picked === id), title: "Added by " + playerName(it.by),
+            onclick: () => { S.picked = S.picked === id ? null : id; render(); } }, kids)
+        : h("span", { class: cls }, kids)));
+    }
+    if (!st.order.length) ul.append(h("li", { class: "blist-empty" }, "Nothing on this list yet."));
+    return h("div", { class: "board list-card", style: fontVars(st) }, ul);
+  }
+  const contentEls = (st, interactive) => st.layout === "list" ? [listEl(st, interactive)] : [boardEl(st, interactive), trayEl(st, interactive)];
+  function subtitleEl(st, interactive) {
+    if (interactive && S.editingSub) {
+      const input = h("input", { id: "subInput", maxlength: "80", value: st.subtitle, placeholder: "Subtitle, e.g. What they would spend it on", "aria-label": "Subtitle" });
+      let done = false;
+      const finish = (save) => { if (done) return; done = true; S.editingSub = false; if (save) setSubtitle(input.value); else render(); };
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); finish(true); } if (e.key === "Escape") finish(false); });
+      input.addEventListener("blur", () => finish(true));
+      setTimeout(() => { input.focus(); input.select(); }, 0);
+      return input;
+    }
+    const edit = () => { S.editingSub = true; S.picked = null; render(); };
+    if (st.subtitle) return interactive
+      ? h("button", { class: "list-sub", type: "button", title: "Edit the subtitle", onclick: edit }, st.subtitle)
+      : h("p", { class: "list-sub" }, st.subtitle);
+    return interactive ? h("button", { class: "add-sub", type: "button", onclick: edit }, "+ Add a subtitle") : null;
+  }
+  function trayEl(st, interactive) {
+    const trayDrop = interactive && S.picked && whereIs(st, S.picked);
+    const slot = h("div", { class: "slot" }, st.pool.map((id) => itemEl(id, st.items[id], interactive)));
+    if (!st.pool.length && !trayDrop) slot.append(h("span", { class: "slot-empty" }, Object.keys(st.items).length ? "Everything is ranked." : "Nothing here yet."));
+    if (trayDrop) slot.append(ghostEl(st, S.picked));
+    const tray = h("div", { class: "tray" + (trayDrop ? " droppable" : ""),
+      onclick: trayDrop ? () => { const id = S.picked; S.picked = null; moveItem(id, null); } : null },
+      h("h3", { class: "panel-title" }, trayDrop ? "Tap here to unrank it" : "Unranked"), slot);
+    if (interactive) dropZone(tray, null);
+    return tray;
+  }
+
+  function renderBoardTab(area, L) {
+    const st = norm(L.state);
+    const interactive = !S.readOnly;
+    if (interactive && S.picked && st.items[S.picked] && st.layout === "list") {
+      const id = S.picked, it = st.items[id], idx = st.order.indexOf(id);
+      const noteInput = h("input", { id: "noteInput", maxlength: "40", value: it.note || "", placeholder: "Note, e.g. Food", "aria-label": "Note" });
+      const save = () => setNote(id, noteInput.value);
+      noteInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); save(); } });
+      area.append(h("div", { class: "picked-bar" },
+        h("span", {}, h("b", {}, it.kind === "image" ? "Picture" : it.text), " selected"),
+        h("span", { class: "note-field" }, noteInput, h("button", { class: "btn small", type: "button", onclick: save }, "Save note")),
+        h("span", { class: "actions" },
+          h("button", { class: "btn ghost small", type: "button", disabled: idx <= 0 || null, "aria-label": "Move up", onclick: () => moveInOrder(id, -1) }, "↑ Up"),
+          h("button", { class: "btn ghost small", type: "button", disabled: idx >= st.order.length - 1 || null, "aria-label": "Move down", onclick: () => moveInOrder(id, 1) }, "↓ Down"),
+          h("button", { class: "btn danger small", type: "button", onclick: () => { S.picked = null; removeItem(id); } }, "Remove"),
+          h("button", { class: "btn ghost small", type: "button", onclick: () => { S.picked = null; render(); } }, "Done"))));
+    } else if (interactive && S.picked && st.items[S.picked]) {
+      const it = st.items[S.picked];
+      area.append(h("div", { class: "picked-bar" },
+        h("span", {}, "Tap a tier to move ", h("b", {}, it.kind === "image" ? "the picture" : it.text), ", or drag it."),
+        h("span", { class: "actions" },
+          h("button", { class: "btn danger small", type: "button", onclick: () => { const id = S.picked; S.picked = null; removeItem(id); } }, "Remove"),
+          h("button", { class: "btn ghost small", type: "button", onclick: () => { S.picked = null; render(); } }, "Cancel"))));
+    } else if (S.picked) S.picked = null;
+
+    area.append(...contentEls(st, interactive));
+    if (interactive && S.gear && st.tiers[S.gear] && st.layout === "tiers") area.append(gearModal(st, S.gear));
+    else if (S.gear) S.gear = null;
+
+    if (interactive) {
+      area.append(h("div", { class: "fonts", role: "group", "aria-label": "Layout for this list" },
+        h("span", { class: "add-label" }, "Layout"),
+        Object.entries(LAYOUTS).map(([key, name]) => h("button", { class: "font-chip", type: "button", "aria-pressed": String(st.layout === key), onclick: () => setLayout(key) }, name))));
+      area.append(h("div", { class: "fonts", role: "group", "aria-label": "Font for this list" },
+        h("span", { class: "add-label" }, "Font"),
+        Object.entries(FONTS).map(([key, [name, fam]]) => h("button", { class: "font-chip", type: "button", style: "font-family:" + fam,
+          "aria-pressed": String(st.font === key), onclick: () => setFont(key) }, name))));
+    }
+    if (interactive) {
+      const input = h("input", { id: "itemInput", maxlength: "40", placeholder: "A word, name or phrase", autocomplete: "off" });
+      area.append(h("form", { class: "add add-box", onsubmit: (e) => { e.preventDefault(); addText(input.value); input.value = ""; $("itemInput") && $("itemInput").focus(); } },
+        h("label", { for: "itemInput" }, "Add to this list"),
+        h("div", { class: "field" }, input, h("button", { class: "btn", type: "submit" }, "Add word"),
+          S.assets ? h("button", { class: "btn ghost", type: "button", disabled: S.uploading || null, onclick: () => $("pickBoard").click() }, S.uploading ? "Uploading…" : "Add picture") : null)));
+    }
+    const canDelete = !S.readOnly && (L.by === S.me || S.isOwner);
+    if (canDelete) {
+      const armed = S.armed === L.id;
+      area.append(h("div", { class: "list-foot" },
+        h("button", { class: "btn danger small" + (armed ? " armed" : ""), type: "button",
+          onclick: () => { if (armed) { S.armed = null; deleteList(L.id); } else { S.armed = L.id; render(); setTimeout(() => { if (S.armed === L.id) { S.armed = null; render(); } }, 4000); } } },
+          armed ? "Tap again to delete for everyone" : "Delete this tier list")));
+    }
+  }
+
+  function renderHistoryTab(area, L) {
+    if (S.viewing) {
+      const v = S.versions.find((x) => x.id === S.viewing);
+      if (!v) { S.viewing = null; }
+      else {
+        const st = norm(v.state);
+        const isLatest = S.versions[0] && S.versions[0].id === v.id;
+        area.append(h("div", { class: "v-banner" },
+          h("span", {}, "Viewing the version from ", h("b", {}, fmtTime(v.updatedAt || v.at)), " by ", h("b", {}, whoName(v.by))),
+          h("span", { class: "actions" },
+            !S.readOnly && !isLatest ? h("button", { class: "btn small", type: "button", onclick: () => restoreVersion(v) }, "Restore this version") : null,
+            h("button", { class: "btn ghost small", type: "button", onclick: () => { S.viewing = null; render(); } }, "Back to history"))));
+        if (st.subtitle) area.append(h("p", { class: "list-sub" }, st.subtitle));
+        area.append(...contentEls(st, false));
+        return;
+      }
+    }
+    if (!S.versions.length) {
+      area.append(h("div", { class: "board" }, h("div", { class: "empty-board" }, h("strong", {}, "Loading history…"), "Every change to this list is saved as a version you can look back at.")));
+      return;
+    }
+    const ol = h("ol", { class: "versions" });
+    S.versions.forEach((v, i) => {
+      const notes = Array.isArray(v.notes) ? v.notes.filter((x) => typeof x === "string") : [];
+      const prev = S.versions[i + 1];
+      const armed = S.armedUndo === v.id;
+      const undoBtn = !S.readOnly && prev ? h("button", { class: "btn small" + (armed ? " danger armed" : " ghost"), type: "button",
+        onclick: () => {
+          if (i > 0 && !armed) { S.armedUndo = v.id; render(); return; }
+          S.armedUndo = null; undoVersion(v, prev, i);
+        } }, armed ? "Tap again to undo" : "Undo") : null;
+      ol.append(h("li", { class: "v-row" },
+        h("span", {}, h("span", { class: "v-who" }, whoName(v.by)), " · ", h("span", { class: "v-when" }, fmtTime(v.updatedAt || v.at)),
+          i === 0 ? h("span", { class: "v-current" }, "  Current") : null),
+        h("span", { class: "v-actions" }, undoBtn,
+          h("button", { class: "btn ghost small", type: "button", onclick: () => { S.viewing = v.id; render(); window.scrollTo({ top: $("boardArea").offsetTop - 12 }); } }, "View")),
+        notes.length ? h("p", { class: "v-notes" }, notes.join(" · ")) : null,
+        armed ? h("p", { class: "v-warn" }, "Undoing this also undoes the " + i + " newer change" + (i === 1 ? "" : "s") + " above it.") : null));
+    });
+    area.append(h("div", { class: "board" }, ol),
+      h("p", { class: "hint", style: "margin-top:8px" }, "Every change is saved here. Undo puts the list back to how it was just before that change. The last " + MAX_VERSIONS + " changes are kept."));
+  }
+
+  function renderChatTab(area, L) {
+    const log = h("div", { class: "chat-log", role: "log", "aria-label": "Chat for " + L.title });
+    if (!S.chat.length) log.append(h("p", { class: "chat-empty" }, "No messages yet. Say something about this list."));
+    let lastDay = "";
+    for (const m of S.chat) {
+      const day = dayLabel(m.at);
+      if (day !== lastDay) { lastDay = day; log.append(h("p", { class: "hint", style: "text-align:center" }, day)); }
+      log.append(h("div", { class: "msg" + (m.by === S.me ? " me" : "") },
+        h("span", { class: "m-head" }, h("b", {}, whoName(m.by)), " · " + new Date(m.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })),
+        h("span", { class: "m-body" },
+          validAsset(m.image) || validDataImg(m.imageData) ? h("img", { class: "m-img", src: validAsset(m.image) ? "/_blob/" + m.image : m.imageData, alt: "Picture from " + whoName(m.by), loading: "lazy",
+            onload: () => { const lg = document.querySelector(".chat-log"); if (lg && lg.scrollHeight - lg.scrollTop - lg.clientHeight < 400) lg.scrollTop = lg.scrollHeight; },
+            onerror: (e) => { e.target.replaceWith(h("span", { class: "hint" }, "Picture unavailable")); } }) : null,
+          m.text ? h("span", {}, m.text) : null)));
+    }
+    const wrap = h("div", { class: "chat" }, log);
+    if (!S.readOnly) {
+      const input = h("input", { id: "chatInput", maxlength: "500", placeholder: "Write a message", autocomplete: "off" });
+      wrap.append(h("form", { onsubmit: (e) => { e.preventDefault(); sendChat(input.value); input.value = ""; setTimeout(() => { const i = $("chatInput"); if (i) i.focus(); }, 0); } },
+        input,
+        h("button", { class: "btn ghost", type: "button", title: "Send a picture", disabled: S.chatUploading || null, onclick: () => $("pickChat").click() }, S.chatUploading ? "Sending…" : "Photo"),
+        h("button", { class: "btn", type: "submit" }, "Send")));
+    }
+    area.append(wrap);
+    requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
+  }
+
+  function renderMain() {
+    const area = $("boardArea");
+    const keepChat = S.tab === "chat" && document.activeElement && document.activeElement.id === "chatInput" ? document.activeElement.value : null;
+    const keepItem = document.activeElement && document.activeElement.id === "itemInput" ? document.activeElement.value : null;
+    area.replaceChildren();
+    const L = curList();
+    if (!L) {
+      area.append(h("div", { class: "board" }, h("div", { class: "empty-board" },
+        h("strong", {}, S.loaded ? "No tier list open" : "Loading…"),
+        S.loaded ? (S.readOnly ? "Nobody has made a tier list yet." : "Make one on the left, like “Best pizza toppings.”") : "")));
+      return;
+    }
+    const st = norm(L.state);
+    if (S.present) {
+      area.append(h("div", { class: "present", style: fontVars(st) },
+        h("h2", { class: "present-title" }, L.title),
+        st.subtitle ? h("p", { class: "present-sub" }, st.subtitle) : null,
+        st.layout === "list" ? listEl(st, false) : boardEl(st, false)),
+        h("button", { id: "presentExit", class: "present-exit", type: "button", onclick: exitPresent }, "Exit present mode"));
+      return;
+    }
+    area.append(h("h2", { class: "list-title" }, L.title),
+      subtitleEl(st, !S.readOnly && S.tab === "board"),
+      h("p", { class: "by" }, "Made by " + whoName(L.by).replace(/^You$/, "you") +
+        (L.updatedAt && L.updatedAt !== L.at ? " · last change " + fmtTime(L.updatedAt) + " by " + whoName(L.updatedBy).replace(/^You$/, "you") : "")));
+    const unread = S.tab === "chat" ? 0 : unreadCount();
+    const tab = (key, label, extra) => h("button", { type: "button", "aria-pressed": String(S.tab === key), onclick: () => setTab(key) }, label, extra);
+    const toolbar = (h("div", { class: "toolbar bottom" },
+      h("div", { class: "tabs", role: "group", "aria-label": "List view" },
+        tab("board", "Board"), tab("history", "History"), tab("chat", "Chat", unread ? h("span", { class: "badge", "aria-label": unread + " new" }, String(unread)) : null)),
+      h("span", { class: "toolbar-right" }, h("span", { class: "meta" }, Object.keys(st.items).length + " items"),
+        h("button", { class: "btn ghost small", type: "button", title: "Save the tier list as a picture", onclick: saveImage }, "Save image"),
+        h("button", { class: "btn small", type: "button", title: "Show just the tier list, ready for a screenshot", onclick: enterPresent }, "Present"))));
+
+    if (S.tab === "history") renderHistoryTab(area, L);
+    else if (S.tab === "chat") { renderChatTab(area, L); markChatSeen(); }
+    else renderBoardTab(area, L);
+    const modal = area.querySelector(".modal-back");
+    if (modal) area.insertBefore(toolbar, modal); else area.append(toolbar);
+    const foot = area.querySelector(".list-foot");
+    if (foot) toolbar.after(foot);
+
+    if (keepChat != null && $("chatInput")) { $("chatInput").value = keepChat; $("chatInput").focus(); }
+    if (keepItem != null && $("itemInput")) { $("itemInput").value = keepItem; $("itemInput").focus(); }
+    if (S.showExport) area.append(exportModal());
+  }
+
+  function render() {
+    const ae = document.activeElement && document.activeElement.id;
+    if (ae === "gearName" && S.gear) return;
+    if (ae === "subInput" && S.editingSub) return;
+    if (ae === "noteInput" && S.picked) return;
+    if (S.present && !curList()) S.present = false;
+    document.body.classList.toggle("presenting", !!S.present);
+    renderShell();
+    if (!needsJoin()) { renderLists(); renderMain(); }
+  }
+
+  // ---- static wiring ----
+  $("listForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const layout = (document.querySelector('input[name="newLayout"]:checked') || {}).value || "tiers";
+    createList($("listInput").value, $("listSub").value, layout);
+    $("listInput").value = ""; $("listSub").value = "";
+  });
+  $("pickBoard").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; addImage(f); });
+  $("pickChat").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; sendChatImage(f); });
+  $("joinForm").addEventListener("submit", (e) => { e.preventDefault(); join($("joinName").value); });
+  $("joinCancel").addEventListener("click", () => { S.renaming = false; $("joinError").hidden = true; render(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const mc = document.querySelector(".m-close");
+    if (mc) { mc.click(); return; }
+    if (S.present) { exitPresent(); return; }
+    if (S.picked) { S.picked = null; render(); }
+  });
+  let exitTimer;
+  function wakeExit() {
+    const b = $("presentExit"); if (!b) return;
+    b.classList.add("show"); clearTimeout(exitTimer);
+    exitTimer = setTimeout(() => { const x = $("presentExit"); if (x) x.classList.remove("show"); }, 2200);
+  }
+  ["mousemove", "touchstart", "keydown"].forEach((ev) => document.addEventListener(ev, () => { if (S.present) wakeExit(); }, { passive: true }));
+  function enterPresent() {
+    S.present = true; S.picked = null; S.coloring = null; S.editingTier = null; S.gear = null;
+    render(); window.scrollTo(0, 0); wakeExit();
+    try { const r = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function exitPresent() {
+    S.present = false; render();
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } catch (e) {}
+  }
+
+  render();
+
+  // ---- connect ----
+  async function start() {
+    if (!window.claude || !window.claude.use) { S.loaded = true; render(); return; }
+    const [db, user, assets, downloads] = await Promise.all([window.claude.use("db"), window.claude.use("user"), window.claude.use("assets"), window.claude.use("downloads")]);
+    S.db = db; S.assets = assets; S.downloads = downloads;
+    if (user) {
+      const [id, owner, can] = await Promise.all([user.id(), user.isOwner(), user.can("data.write")]);
+      S.me = id; S.isOwner = !!owner; S.canWrite = can;
+    }
+    S.readOnly = !db || !S.me || S.canWrite === false;
+    if (!db) { S.loaded = true; render(); return; }
+
+    let pending = 2;
+    const ready = () => { if (pending > 0 && --pending === 0) { S.loaded = true; render(); syncSubs(); } else render(); };
+    const fail = () => { S.loaded = true; render(); toast("Lost the live connection. Reload the page to reconnect."); };
+    const toMap = (snap) => { const m = {}; for (const d of snap.docs) if (d.exists) m[d.id] = d.data(); return m; };
+    db.collection("players").onSnapshot((snap) => { S.players = toMap(snap); ready(); }, fail);
+    db.collection("lists").onSnapshot((snap) => {
+      S.lists = toMap(snap);
+      const before = S.current;
+      ready();
+      if (S.loaded && S.current !== before) syncSubs();
+    }, fail);
+  }
+  start().catch(() => { S.loaded = true; render(); });
+})();
+</script>
+
+</body></html>
